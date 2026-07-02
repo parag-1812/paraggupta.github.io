@@ -11,7 +11,7 @@ window.VoyagerScene = (function () {
   "use strict";
 
   let renderer, scene, camera, sunLight, sun, planets = [], starLayers = [];
-  let belt, comet, cometTail, raycaster, composer = null;
+  let belt, comet, cometTail, raycaster, composer = null, blackhole = null;
   let lastT = 0, curFov = 58, container, opts = {};
   let hovered = -1, boost = 0, currentPick = null, pickObj = null;
   let cine = null;                       // cinematic fly-to-galaxy state
@@ -205,6 +205,34 @@ window.VoyagerScene = (function () {
     }
   }
 
+  /* ---------- black hole (clickable · dive target) ---------- */
+  function diskTex() {
+    const s = 512, c = cv(s, s), x = c.getContext("2d"), cx = s / 2, cy = s / 2, inner = s * 0.2, outer = s * 0.5;
+    for (let r = inner; r < outer; r++) {
+      const tt = (r - inner) / (outer - inner);
+      const col = tt < 0.28 ? [255, 255, 235] : tt < 0.55 ? [255, 205, 130] : [255, 140, 60];
+      let a = 0.85 * (1 - tt) + Math.sin(tt * 55) * 0.1; a = Math.max(0, Math.min(0.92, a));
+      x.strokeStyle = `rgba(${col[0]},${col[1]},${col[2]},${a})`; x.lineWidth = 1.4;
+      x.beginPath(); x.arc(cx, cy, r, 0, 6.28); x.stroke();
+    }
+    return new THREE.CanvasTexture(c);
+  }
+  function blackHole() {
+    const grp = new THREE.Group(); grp.position.set(0, -10, -1020);
+    const eh = new THREE.Mesh(new THREE.SphereGeometry(20, 48, 48), new THREE.MeshBasicMaterial({ color: 0x000000, toneMapped: false, fog: false }));
+    grp.add(eh);
+    const photon = new THREE.Mesh(new THREE.TorusGeometry(21.5, 1.1, 16, 90), new THREE.MeshBasicMaterial({ color: 0xffe6b0, toneMapped: false, fog: false }));
+    grp.add(photon);
+    const disk = new THREE.Mesh(new THREE.RingGeometry(26, 64, 100), new THREE.MeshBasicMaterial({ map: diskTex(), side: THREE.DoubleSide, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, fog: false }));
+    disk.rotation.x = 1.12; disk.rotation.y = 0.22; grp.add(disk);
+    const glow = radialSprite([[0, "rgba(255,210,150,0.5)"], [0.4, "rgba(255,150,80,0.18)"], [1, "rgba(255,120,60,0)"]]);
+    glow.scale.set(200, 200, 1); glow.material.fog = false; grp.add(glow);
+    const hit = new THREE.Mesh(new THREE.SphereGeometry(66, 12, 12), new THREE.MeshBasicMaterial({ visible: false }));
+    hit.userData.pick = { kind: "blackhole", key: "blackhole" }; grp.add(hit); clickable.push(hit);
+    grp.userData = { disk, photon };
+    scene.add(grp); blackhole = grp;
+  }
+
   /* ====================================================================
      INIT
      ==================================================================== */
@@ -271,7 +299,7 @@ window.VoyagerScene = (function () {
     nebula("#4a2b8f", -170, 90, -160, 460); nebula("#123a7a", 200, -100, -300, 560); nebula("#7a1f5a", -130, -70, -30, 320); nebula("#1f5a6a", 150, 110, -430, 520);
     milkyway();
     galaxy("andromeda", "#a9c4ff", -330, 150, -900, 240, 0.6); galaxy("triangulum", "#ffcf9a", 320, -180, -640, 170, -0.3); galaxy("whirlpool", "#e6a9ff", -280, -160, -1180, 300, 1.1);
-    asteroidBelt(); makeComet(); makeMeteors(4);
+    asteroidBelt(); makeComet(); makeMeteors(4); blackHole();
 
     // bloom (optional — vendored postprocessing). Never let it break the scene.
     try {
@@ -310,6 +338,11 @@ window.VoyagerScene = (function () {
   }
   function returnHome() { if (cine) cine.phase = "returning"; }
 
+  // dive into the black hole (camera accelerates into the singularity)
+  function diveTo() { if (!blackhole) return; const B = blackhole.position.clone(); cine = { phase: "dive", pos: B, look: B.clone(), t0: performance.now() }; boost = 1; }
+  // snap the camera back to the start (used when relaunching from the finale)
+  function resetToStart() { cine = null; if (camera) camera.position.copy(OVER_POS); }
+
   /* ====================================================================
      UPDATE
      ==================================================================== */
@@ -340,6 +373,10 @@ window.VoyagerScene = (function () {
       if (cine.phase === "system") {                      // wide system view
         lerpF = dt * 2.2; camTarget = cine.pos; camLook = cine.look;
         if (velocity > 0.6) cine = null;                  // any scroll exits
+      } else if (cine.phase === "dive") {                 // diving into the black hole
+        const el = (now - cine.t0) / 1000;
+        lerpF = dt * (1.4 + el * 2.6); camTarget = cine.pos; camLook = cine.look;
+        boost = Math.min(3, boost + dt * 1.6);            // heavy warp FOV kick
       } else if (cine.phase === "going") {                // flying out to a galaxy
         lerpF = dt * 1.7; camTarget = cine.pos; camLook = cine.look;
         if (!cine.arrived && camera.position.distanceTo(cine.pos) < 9) { cine.arrived = true; if (opts.onArrive) opts.onArrive(cine.pick); }
@@ -362,7 +399,7 @@ window.VoyagerScene = (function () {
     currentPick = null; pickObj = null;
     if (hits.length) {
       const o = hits[0].object, pk = o.userData.pick;
-      if (pk && (pk.kind === "galaxy" || hits[0].distance < 320)) { currentPick = pk; pickObj = o; }
+      if (pk && (pk.kind !== "planet" || hits[0].distance < 320)) { currentPick = pk; pickObj = o; }
     }
     hovered = (currentPick && currentPick.kind === "planet") ? currentPick.index : -1;
     renderer.domElement.style.cursor = currentPick ? "pointer" : "default";
@@ -381,6 +418,7 @@ window.VoyagerScene = (function () {
     }
     sun.userData.mesh.rotation.y += 0.03 * dt;
     if (belt) belt.rotation.z += dt * 0.05;
+    if (blackhole) { blackhole.userData.disk.rotation.z += dt * 0.35; blackhole.userData.photon.rotation.z += dt * 0.1; }
 
     // meteor shower
     for (let mi = 0; mi < meteors.length; mi++) {
@@ -420,5 +458,5 @@ window.VoyagerScene = (function () {
     if (composer) composer.setSize(innerWidth, innerHeight);
   }
 
-  return { init, update, resize, jump, flyTo, returnHome, systemView };
+  return { init, update, resize, jump, flyTo, returnHome, systemView, diveTo, resetToStart };
 })();

@@ -136,8 +136,16 @@
     emailEl.textContent = c.email; emailEl.href = "mailto:" + c.email;
     const links = (c.links || []).slice();
     if (c.phone) links.push({ label: "Call", url: "tel:" + c.phone, icon: "\u{1F4DE}" });
-    $("#contact-links").innerHTML = links.map((l) => `
+    const linksHTML = links.map((l) => `
       <a href="${esc(l.url)}" target="_blank" rel="noopener"><span>${l.icon || "→"}</span> ${esc(l.label)}</a>`).join("");
+    $("#contact-links").innerHTML = linksHTML;
+
+    // Finale scene (after the black-hole dive) reuses contact + outro
+    if ($("#end-message") && c.outro) $("#end-message").textContent = c.outro.message;
+    const endEmail = $("#end-email");
+    if (endEmail) { endEmail.textContent = c.email; endEmail.href = "mailto:" + c.email; }
+    if ($("#end-links")) $("#end-links").innerHTML = linksHTML;
+
     $("#year").textContent = new Date().getFullYear();
   }
 
@@ -251,6 +259,10 @@
     $("#orbitmap-probe").style.top = (progress * 100).toFixed(1) + "%";
     omDots().forEach((d, i) => d.classList.toggle("active", i === nearest));
     $$(".hud-links a").forEach((a) => a.classList.toggle("active", a.getAttribute("href") === "#" + SECTIONS[nearest]));
+
+    // black-hole hint near the end of the journey
+    const vh = $("#voidhint");
+    if (vh) vh.classList.toggle("show", progress > 0.9 && !document.body.classList.contains("diving"));
   }
 
   /* ======================================================================
@@ -287,6 +299,8 @@
     ret.style.transform = `translate(${x}px, ${y}px)`;
     if (pick.kind === "planet") {
       $("#reticle-label").textContent = `${PLANET[pick.index].toUpperCase()} · ${DEST[pick.index]} ▸ CLICK TO TRAVEL`;
+    } else if (pick.kind === "blackhole") {
+      $("#reticle-label").textContent = "THE VOID ▸ ENTER THE BLACK HOLE";
     } else {
       const f = FACTS[pick.key];
       $("#reticle-label").textContent = `${(f ? f.name : "GALAXY").toUpperCase()} ▸ CLICK FOR FACTS`;
@@ -301,6 +315,7 @@
   }
   function onSelect(pick) {
     clearTimeout(factTimer);
+    if (pick.kind === "blackhole") { startDive(); return; }
     if (pick.kind === "planet") {
       factMode = "planet";
       document.body.classList.add("facts-open");         // keep content, hide orbit map
@@ -342,6 +357,29 @@
     factMode = null;
   }
 
+  /* ---- black-hole dive → finale scene ---- */
+  function startDive() {
+    closeFacts();
+    document.body.classList.add("diving");
+    document.body.style.overflow = "hidden";
+    flashJump();
+    if (scene3D) VoyagerScene.diveTo();
+    const warp = $("#warp-dive");
+    warp.classList.add("active");
+    setTimeout(() => warp.classList.add("flash"), 2100);
+    setTimeout(() => {
+      $("#endscene").classList.add("show");
+      setTimeout(() => warp.classList.remove("active", "flash"), 700);
+    }, 2650);
+  }
+  function endRelaunch() {
+    $("#endscene").classList.remove("show");
+    document.body.classList.remove("diving");
+    document.body.style.overflow = "";
+    if (scene3D) VoyagerScene.resetToStart();
+    scrollTo({ top: 0, behavior: "auto" });
+  }
+
   /* ======================================================================
      MISC
      ====================================================================== */
@@ -358,6 +396,8 @@
     });
     omDots().forEach((d, i) => d.addEventListener("click", () => { if (scene3D) VoyagerScene.jump(); flashJump(); goTo(i); }));
     addEventListener("resize", () => { if (scene3D) VoyagerScene.resize(); });
+    // finale relaunch
+    const er = $("#end-relaunch"); if (er) er.addEventListener("click", endRelaunch);
     // facts panel close
     $("#fact-close").addEventListener("click", closeFacts);
     $("#fact-backdrop").addEventListener("click", closeFacts);

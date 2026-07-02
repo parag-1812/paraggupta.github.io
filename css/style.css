@@ -373,6 +373,40 @@ body.viewing-space #mission { opacity: 0; pointer-events: none; }
 body.viewing-space .orbitmap,
 body.facts-open .orbitmap { opacity: 0 !important; pointer-events: none; }
 
+/* ---- black-hole discoverability hint ---- */
+.voidhint { position: fixed; bottom: 26px; left: 50%; transform: translateX(-50%) translateY(12px); z-index: 17; font-family: var(--mono); font-size: 12px; letter-spacing: 1px; color: var(--ink); background: var(--glass); border: 1px solid var(--glass-brd); padding: 10px 18px; border-radius: 999px; backdrop-filter: blur(10px); opacity: 0; visibility: hidden; transition: opacity .5s, transform .5s, visibility .5s; box-shadow: 0 0 26px rgba(150,90,220,.35); }
+.voidhint.show { opacity: 1; visibility: visible; transform: translateX(-50%) translateY(0); }
+@media (max-width: 640px) { .voidhint { font-size: 10px; width: 90vw; text-align: center; } }
+
+/* ---- black-hole dive warp + finale ---- */
+.warp-dive { position: fixed; inset: 0; z-index: 60; pointer-events: none; opacity: 0; overflow: hidden; background: #000; transition: opacity .4s ease, background .35s ease; }
+.warp-dive.active { opacity: 1; }
+.warp-dive::before {
+  content: ""; position: absolute; left: 50%; top: 50%; width: 200vmax; height: 200vmax; margin: -100vmax 0 0 -100vmax;
+  background: repeating-conic-gradient(from 0deg, transparent 0 0.7deg, rgba(150,210,255,0.55) 0.7deg 1.3deg, transparent 1.3deg 2.8deg);
+}
+.warp-dive.active::before { animation: warpdive 2.6s cubic-bezier(.5,0,.9,1) forwards; }
+@keyframes warpdive { 0% { transform: scale(.12) rotate(0deg); opacity: 0; } 25% { opacity: .95; } 100% { transform: scale(7) rotate(80deg); opacity: 1; } }
+.warp-dive.flash { background: #fff; }
+
+.endscene { position: fixed; inset: 0; z-index: 62; display: grid; place-items: center; text-align: center; padding: 30px;
+  background: radial-gradient(ellipse at 50% 30%, #101a3a 0%, #05060d 60%); opacity: 0; visibility: hidden; transition: opacity .9s ease, visibility .9s; }
+.endscene.show { opacity: 1; visibility: visible; }
+.endscene-stars { position: absolute; inset: 0; background-image:
+  radial-gradient(1px 1px at 20% 30%, #fff, transparent), radial-gradient(1px 1px at 70% 60%, #cfe0ff, transparent),
+  radial-gradient(1px 1px at 40% 80%, #fff, transparent), radial-gradient(1px 1px at 85% 25%, #bcd0ff, transparent),
+  radial-gradient(1px 1px at 55% 45%, #fff, transparent), radial-gradient(1px 1px at 10% 70%, #cfe0ff, transparent);
+  background-repeat: repeat; background-size: 320px 320px; opacity: .5; animation: float 12s ease-in-out infinite; }
+.endscene-card { position: relative; z-index: 2; max-width: 560px; }
+.end-badge { font-family: var(--mono); letter-spacing: 5px; font-size: 12px; color: var(--cyan); border: 1px solid var(--glass-brd); border-radius: 999px; padding: 8px 18px; display: inline-block; margin-bottom: 24px; background: var(--glass); }
+.end-title { font-size: clamp(2rem, 7vw, 3.6rem); font-weight: 800; letter-spacing: 1px; background: linear-gradient(90deg, #fff, var(--cyan) 70%, var(--magenta)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.end-message { color: var(--ink-dim); margin: 18px auto 26px; font-size: 1.05rem; max-width: 480px; }
+.endscene .contact-email { margin: 6px 0 22px; }
+.endscene .contact-links { justify-content: center; }
+
+/* hide the world during the dive */
+body.diving #mission, body.diving .telemetry, body.diving .orbitmap, body.diving .hud, body.diving .reticle { opacity: 0 !important; pointer-events: none; transition: opacity .3s; }
+
 .flash { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 50%, rgba(180,240,255,0.9), rgba(120,200,255,0.35) 35%, transparent 70%); }
 .flash.go { animation: warpflash .6s ease-out; }
 @keyframes warpflash { 0% { opacity: 0; transform: scale(1.4); } 22% { opacity: .85; } 100% { opacity: 0; transform: scale(1); } }
