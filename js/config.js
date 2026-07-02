@@ -2,130 +2,186 @@
    MISSION CONFIG  —  EDIT EVERYTHING ABOUT YOU HERE
    -------------------------------------------------------------------------
    This is the ONLY file you need to touch to update your portfolio content.
-   Change the text below, save, and refresh the page. No layout knowledge
-   required. Keep the quotes and commas where they are.
+   Change the text below, save, and refresh the page. Keep quotes & commas.
    ========================================================================= */
 
 const CONFIG = {
   // ---- IDENTITY -----------------------------------------------------------
-  callsign: "PARAG GUPTA",              // Your name (shown big on the hero)
-  title: "Java Developer",              // Your role / what you want to be
-  tagline: "Building reliable backend systems, one launch at a time.",
-  location: "India",                    // City / Country
-  status: "Available for new missions", // e.g. "Open to opportunities"
+  callsign: "PARAG GUPTA",
+  title: "Java Full Stack Developer",
+  // Hero cycles through these with a typewriter effect (leave [] to disable):
+  roles: [
+    "Java Full Stack Developer",
+    "Spring Boot & Microservices",
+    "React.js Front-End",
+    "REST API Craftsman",
+    "Associate Engineer @ Alphavima",
+  ],
+  tagline: "Building scalable, clean, and testable enterprise systems — from Spring Boot services to React UIs.",
+  location: "India",
+  status: "Available for new missions",
+
+  // ---- AVATAR -------------------------------------------------------------
+  // Hosted on Google Drive (must be shared "Anyone with the link").
+  // Falls back to initials "PG" if it can't load.
+  avatarImage: "https://drive.google.com/thumbnail?id=1lZx3T-apwQ1tAPwMmsErzn4z9M3au_E5&sz=w1000",
+  // Crop focus for the round avatar. First value = horizontal, second = vertical.
+  // LOWER the 2nd % to show more of the top (face); raise it to show lower.
+  // e.g. "center 12%" = face higher, "center 30%" = shows more torso.
+  avatarFocus: "center 20%",
+
+  // ---- RESUME -------------------------------------------------------------
+  // Hosted on Google Drive (opens the viewer; visitors can read & download).
+  resumeUrl: "https://drive.google.com/file/d/1J4wi3ipYvboM15pNoqErvYz7Cfn3irg-/view?usp=sharing",
 
   // ---- CONTACT ------------------------------------------------------------
-  email: "shahj@alphavima.com",
-  phone: "",                            // optional, leave "" to hide
+  email: "paraggupta9988@gmail.com",
+  phone: "+91-7023654446",
   links: [
-    // label, url, and an emoji/icon. Add or remove freely.
-    { label: "GitHub",   url: "https://github.com/yourusername",   icon: "\u{1F420}" },
-    { label: "LinkedIn", url: "https://linkedin.com/in/yourprofile", icon: "\u{1F517}" },
-    { label: "Resume",   url: "#",                                  icon: "\u{1F4C4}" },
+    { label: "GitHub",   url: "https://github.com/parag-1812",               icon: "\u{1F420}" },
+    { label: "LinkedIn", url: "https://www.linkedin.com/in/paraggupta7023/", icon: "\u{1F517}" },
+    { label: "Resume",   url: "https://drive.google.com/file/d/1J4wi3ipYvboM15pNoqErvYz7Cfn3irg-/view?usp=sharing", icon: "\u{1F4C4}" },
   ],
 
-  // ---- ABOUT (Stage 1: Pre-Launch) ---------------------------------------
+  // ---- ABOUT (Mercury) ----------------------------------------------------
   about: {
     heading: "Mission Briefing",
-    // Each string is a paragraph. Add as many as you like.
     paragraphs: [
-      "I'm a Java developer with 0–2 years of experience, currently building enterprise solutions at Alphavima Technologies.",
-      "I specialize in backend engineering with Spring Boot, relational databases, and Microsoft Dynamics CRM integrations — turning business requirements into clean, maintainable code.",
-      "I care about strong fundamentals: data structures, algorithms, and system design. My goal is to grow into a backend engineer who ships robust, scalable systems.",
+      "I'm a Full Stack Developer with hands-on experience building scalable web applications using Java, Spring Boot, React.js, REST APIs, and SQL.",
+      "I work across the stack — from designing microservices and securing REST endpoints to building responsive React UIs and enterprise PCF controls at Alphavima Technologies.",
+      "I care about clean architecture: OOP, SOLID principles, and design patterns that keep systems maintainable, testable, and ready to scale.",
     ],
-    // Quick stats shown as little instrument dials
     stats: [
-      { value: "0–2", label: "Years Experience" },
-      { value: "10+",  label: "Technologies" },
-      { value: "∞",  label: "Curiosity" },
+      { value: "8.6", label: "CGPA / 10" },
+      { value: "3+",  label: "Key Projects" },
+      { value: "15+", label: "Technologies" },
     ],
   },
 
-  // ---- SKILLS (Stage 2: Ignition) ----------------------------------------
-  // Each "system" is a group. level is 0-100 (fuel gauge).
+  // ---- SKILLS (Venus) — mapped from the résumé skill matrix --------------
   skills: [
     {
-      system: "Core Propulsion",   // Category name
-      subtitle: "Language & Fundamentals",
+      system: "Languages", subtitle: "Core Propulsion",
       items: [
-        { name: "Core Java & OOP",        level: 85 },
-        { name: "Data Structures & Algorithms", level: 75 },
-        { name: "Collections & Streams",  level: 80 },
-        { name: "Multithreading",         level: 65 },
+        { name: "Java",        level: 88 },
+        { name: "JavaScript",  level: 80 },
+        { name: "C#",          level: 74 },
+        { name: "SQL",         level: 82 },
       ],
     },
     {
-      system: "Guidance Systems",
-      subtitle: "Frameworks & Backend",
+      system: "Frameworks & Frontend", subtitle: "Guidance Systems",
       items: [
-        { name: "Spring Boot",  level: 80 },
-        { name: "Spring MVC / REST APIs", level: 78 },
-        { name: "System Design", level: 60 },
+        { name: "Spring Boot", level: 85 },
+        { name: "React.js",    level: 80 },
+        { name: "HTML5",       level: 84 },
+        { name: "CSS3",        level: 80 },
       ],
     },
     {
-      system: "Fuel & Storage",
-      subtitle: "Data Layer",
+      system: "Backend", subtitle: "Reactor Core",
       items: [
-        { name: "SQL (MySQL / PostgreSQL)", level: 78 },
-        { name: "JPA / Hibernate",  level: 70 },
-        { name: "JDBC",             level: 72 },
+        { name: "REST APIs",       level: 85 },
+        { name: "Microservices",   level: 78 },
+        { name: "Spring Security", level: 78 },
+        { name: ".NET",            level: 70 },
       ],
     },
     {
-      system: "Ground Support",
-      subtitle: "Tools & Integrations",
+      system: "Databases", subtitle: "Fuel & Storage",
       items: [
-        { name: "Microsoft Dynamics CRM APIs", level: 75 },
-        { name: "Docker",   level: 65 },
-        { name: "Git",      level: 82 },
-        { name: "Maven / Gradle", level: 70 },
-        { name: "HTML / CSS / JS", level: 68 },
+        { name: "PostgreSQL", level: 80 },
+        { name: "MySQL",      level: 80 },
+        { name: "Oracle SQL", level: 72 },
+        { name: "MongoDB",    level: 76 },
+      ],
+    },
+    {
+      system: "Tools & Cloud", subtitle: "Ground Support",
+      items: [
+        { name: "Git",     level: 86 },
+        { name: "Docker",  level: 78 },
+        { name: "Azure",   level: 68 },
+        { name: "Maven",   level: 76 },
+        { name: "Postman", level: 84 },
+      ],
+    },
+    {
+      system: "Concepts", subtitle: "Flight Principles",
+      items: [
+        { name: "OOP",             level: 88 },
+        { name: "SOLID Principles", level: 82 },
+        { name: "Design Patterns", level: 78 },
+        { name: "Unit Testing",    level: 75 },
       ],
     },
   ],
 
-  // ---- PROJECTS (Stage 3: Orbit) -----------------------------------------
-  // Add/replace with your real projects. tags is a list of tech used.
+  // ---- PROJECTS (Earth) — real projects from the résumé ------------------
+  // Add a `link` (GitHub/live URL) to any project to show an "OPEN DOCK" link.
   projects: [
     {
-      name: "CRM Integration Engine",
-      blurb: "Synced business data between internal services and Microsoft Dynamics 365 via secure REST APIs, with retry and error-handling logic.",
-      tags: ["Java", "Spring Boot", "Dynamics CRM", "REST"],
-      link: "",   // optional GitHub/live URL
-    },
-    {
-      name: "Inventory Management API",
-      blurb: "A RESTful backend for tracking stock, orders, and suppliers with role-based access and paginated queries.",
-      tags: ["Spring Boot", "PostgreSQL", "JPA", "Docker"],
+      name: "CloudKitchenX",
+      blurb: "Distributed cloud-kitchen management system. A scalable order-management platform with clean-architecture microservices, custom ingredient-based orders, accurate pricing & prep-time estimation, plus inventory-reservation logic for transactional integrity.",
+      tags: ["Java", "Spring Boot", "Microservices", "REST APIs", "Docker", "PostgreSQL"],
       link: "",
     },
     {
-      name: "Algorithm Visualizer",
-      blurb: "A learning project that animates sorting and pathfinding algorithms to strengthen DSA intuition.",
-      tags: ["Java", "DSA", "JavaFX"],
+      name: "Multi-Role Authentication Service",
+      blurb: "Secure JWT authentication with Admin, User, and Service roles and fine-grained RBAC across every endpoint — secure credential storage, validation, and full token lifecycle management.",
+      tags: ["Java", "Spring Boot", "Spring Security", "JWT", "RBAC"],
+      link: "",
+    },
+    {
+      name: "LNCT Alumni Portal",
+      blurb: "Full-stack alumni management portal with a responsive React front-end (reusable components, dynamic search, real-time filtering) and REST APIs on Node.js/Express backed by MongoDB. Deployed end-to-end on Vercel.",
+      tags: ["React.js", "Node.js", "Express", "MongoDB", "REST APIs"],
       link: "",
     },
   ],
 
-  // ---- EXPERIENCE (Stage 4: Deep Space Timeline) -------------------------
+  // ---- EXPERIENCE (Mars) --------------------------------------------------
   experience: [
     {
-      role: "Java Developer",
-      org: "Alphavima Technologies",
-      period: "Present",
+      role: "Associate Engineer",
+      org: "Alphavima Technologies Inc.",
+      period: "Apr 2025 – Present",
       points: [
-        "Develop and maintain Spring Boot services and Dynamics CRM integrations.",
-        "Design database schemas and write optimized SQL queries.",
-        "Collaborate with the team using Git and containerized workflows.",
+        "Designed and implemented React-based PCF controls (Kanban board) to visualize and manage business data in enterprise web apps.",
+        "Built and customized full-stack web components with HTML5, CSS3, and JavaScript, improving UI behavior and user experience.",
+        "Developed server-side business logic and REST integrations using C#/.NET, automating workflows and enforcing data validations.",
+        "Performed debugging, root-cause analysis, and code reviews of production issues, collaborating with QA for stable releases.",
+        "Applied OOP, SOLID principles, and design patterns to build scalable, maintainable, testable applications.",
       ],
     },
-    // Add education or previous roles here:
-    // {
-    //   role: "B.Tech / Degree",
-    //   org: "Your University",
-    //   period: "20XX – 20XX",
-    //   points: ["Relevant coursework, achievements, etc."],
-    // },
   ],
+
+  // ---- EDUCATION (Jupiter) ------------------------------------------------
+  education: [
+    {
+      role: "B.Tech · Computer Science",
+      org: "Lakshmi Narain College of Technology, Bhopal",
+      period: "2020 – 2024",
+      points: [
+        "CGPA: 8.6 / 10.",
+        "Core CS foundation: Data Structures & Algorithms, DBMS, OOP, and System Design.",
+      ],
+    },
+  ],
+
+  // ---- CURRENTLY EXPLORING (Saturn) --------------------------------------
+  exploring: {
+    heading: "Beyond the Core",
+    lead: "Signals I'm chasing next — always leveling up.",
+    items: [
+      "System Design", "Data Structures & Algorithms", "Cloud (Azure)",
+      "Kubernetes", "Kafka & Event-Driven Systems", "Open Source",
+    ],
+  },
+
+  // ---- OUTRO (Neptune finale) --------------------------------------------
+  outro: {
+    heading: "End of Transmission",
+    message: "You've reached the edge of the system. Thanks for making the journey — let's build something out of this world together.",
+  },
 };

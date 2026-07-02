@@ -3,144 +3,207 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Parag Gupta · Mission Control</title>
-  <meta name="description" content="Portfolio of Parag Gupta — Java Developer. A rocket mission through my skills, projects, and experience." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <title>Parag Gupta · Voyager</title>
+  <meta name="description" content="Portfolio of Parag Gupta — Java Full Stack Developer. A 3D Voyager journey through the entire solar system." />
   <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <!-- Deep-space animated background -->
+  <div id="scene" class="scene"></div>
   <canvas id="starfield"></canvas>
 
-  <!-- ================= LAUNCH INTRO OVERLAY ================= -->
-  <div id="launch-screen">
-    <div class="launch-inner">
-      <div class="launch-badge">MISSION&nbsp;CONTROL</div>
-      <h1 class="launch-name" id="launch-name">PARAG GUPTA</h1>
-      <p class="launch-sub" id="launch-title">Java Developer</p>
+  <!-- Targeting reticle -->
+  <div id="reticle" class="reticle" aria-hidden="true">
+    <span class="reticle-corner tl"></span><span class="reticle-corner tr"></span>
+    <span class="reticle-corner bl"></span><span class="reticle-corner br"></span>
+    <span class="reticle-label" id="reticle-label"></span>
+  </div>
+  <div id="flash" class="flash" aria-hidden="true"></div>
 
+  <!-- ================= LAUNCH INTRO ================= -->
+  <div id="launch-screen">
+    <div class="launch-bg"></div>
+    <div class="launch-grid"></div>
+
+    <div class="launch-inner">
+      <div class="launch-badge">VOYAGER&nbsp;·&nbsp;MISSION&nbsp;CONTROL</div>
+      <h1 class="launch-name" id="launch-name">PARAG GUPTA</h1>
+      <p class="launch-sub" id="launch-title">Java Full Stack Developer</p>
       <button id="launch-btn" class="launch-btn">
-        <span class="launch-btn-label">INITIATE LAUNCH</span>
+        <span class="launch-btn-label">🚀 IGNITE &amp; LAUNCH</span>
         <span class="launch-btn-glow"></span>
       </button>
-
       <div id="countdown" class="countdown" aria-hidden="true"></div>
-      <p class="launch-hint">Press to begin the mission</p>
+      <p class="launch-hint">Light the engines · fly the whole solar system</p>
     </div>
-    <div class="rocket-liftoff" id="rocket-liftoff">
-      <div class="rocket-emoji">🚀</div>
-      <div class="rocket-flame"></div>
-    </div>
+
+    <!-- 3D rocket renders here (js/rocket.js) -->
+    <div class="rocket3d" id="rocket3d"></div>
   </div>
 
-  <!-- ================= NAV / HUD ================= -->
+  <!-- ================= HUD / NAV ================= -->
   <nav id="hud" class="hud" aria-label="Mission navigation">
-    <div class="hud-brand">
-      <span class="hud-dot"></span>
-      <span id="hud-callsign">PARAG</span>
-    </div>
+    <div class="hud-brand"><span class="hud-dot"></span><span id="hud-callsign">PARAG</span></div>
     <ul class="hud-links">
-      <li><a href="#about" data-stage="1">Briefing</a></li>
-      <li><a href="#skills" data-stage="2">Systems</a></li>
-      <li><a href="#projects" data-stage="3">Payload</a></li>
-      <li><a href="#experience" data-stage="4">Log</a></li>
-      <li><a href="#contact" data-stage="5">Comms</a></li>
+      <li><a href="#about"      data-planet="Mercury">About</a></li>
+      <li><a href="#skills"     data-planet="Venus">Skills</a></li>
+      <li><a href="#projects"   data-planet="Earth">Projects</a></li>
+      <li><a href="#experience" data-planet="Mars">Experience</a></li>
+      <li><a href="#education"  data-planet="Jupiter">Education</a></li>
+      <li><a href="#contact"    data-planet="Neptune">Contact</a></li>
     </ul>
-    <a href="#contact" class="hud-cta">Hail Me</a>
+    <div class="hud-right">
+      <button id="system-view" class="hud-system" title="View the whole system">◎ SYSTEM VIEW</button>
+      <a href="#contact" class="hud-cta">Hail Me</a>
+    </div>
   </nav>
 
-  <!-- Altitude / progress rail -->
-  <div class="altitude-rail" aria-hidden="true">
-    <div class="altitude-fill" id="altitude-fill"></div>
-    <span class="altitude-label" id="altitude-label">GROUND</span>
+  <!-- ================= VOYAGER TELEMETRY ================= -->
+  <div class="telemetry" id="telemetry" aria-hidden="true">
+    <div class="tel-row"><span class="tel-key">CRAFT</span><span class="tel-val">VOYAGER · OUTBOUND</span></div>
+    <div class="tel-row"><span class="tel-key">TARGET</span><span class="tel-val" id="tel-target">SUN</span></div>
+    <div class="tel-row"><span class="tel-key">DIST</span><span class="tel-val" id="tel-dist">0.0 AU</span></div>
+    <div class="tel-bar"><div class="tel-bar-fill" id="tel-bar-fill"></div></div>
   </div>
+
+  <!-- ================= ORBIT MAP ================= -->
+  <aside class="orbitmap" id="orbitmap" aria-hidden="true">
+    <div class="orbitmap-line"></div>
+    <div class="orbitmap-probe" id="orbitmap-probe">🛰️</div>
+    <ul>
+      <li data-target="#top"        class="om-dot om-sun">    <span>Sun</span></li>
+      <li data-target="#about"      class="om-dot om-mercury"><span>Mercury</span></li>
+      <li data-target="#skills"     class="om-dot om-venus">  <span>Venus</span></li>
+      <li data-target="#projects"   class="om-dot om-earth">  <span>Earth</span></li>
+      <li data-target="#experience" class="om-dot om-mars">   <span>Mars</span></li>
+      <li data-target="#education"  class="om-dot om-jupiter"><span>Jupiter</span></li>
+      <li data-target="#exploring"  class="om-dot om-saturn"> <span>Saturn</span></li>
+      <li data-target="#waypoint"   class="om-dot om-uranus"> <span>Uranus</span></li>
+      <li data-target="#contact"    class="om-dot om-neptune"><span>Neptune</span></li>
+    </ul>
+  </aside>
 
   <main id="mission">
 
-    <!-- ===== HERO ===== -->
-    <header class="hero" id="top">
+    <!-- ===== SUN · HERO ===== -->
+    <header class="station station-hero" id="top" data-planet="Sun">
       <div class="hero-inner reveal">
+        <div class="avatar-ring" id="avatar"></div>
         <div class="hero-status" id="hero-status">● Available for new missions</div>
         <h1 class="hero-name" id="hero-name">PARAG GUPTA</h1>
-        <p class="hero-title" id="hero-title">Java Developer</p>
+        <p class="hero-title" id="hero-title">Java Full Stack Developer</p>
         <p class="hero-tagline" id="hero-tagline"></p>
-        <div class="hero-meta">
-          <span id="hero-location"></span>
-        </div>
+        <div class="hero-meta"><span id="hero-location"></span></div>
         <div class="hero-actions">
-          <a href="#projects" class="btn btn-primary">View Payload</a>
+          <a href="#projects" class="btn btn-primary">Fly to My Projects</a>
+          <a id="resume-btn" href="#" class="btn btn-ghost" target="_blank" rel="noopener">View Résumé</a>
           <a href="#contact" class="btn btn-ghost">Open Comms</a>
         </div>
       </div>
-      <div class="scroll-cue" aria-hidden="true">
-        <span>SCROLL TO ASCEND</span>
-        <div class="scroll-cue-line"></div>
-      </div>
+      <div class="scroll-cue" aria-hidden="true"><span>SCROLL TO TRAVEL OUTWARD</span><div class="scroll-cue-line"></div></div>
     </header>
 
-    <!-- ===== STAGE 1: ABOUT ===== -->
-    <section class="stage" id="about" data-stage-name="STAGE 1 · PRE-LAUNCH">
-      <div class="stage-head reveal">
-        <span class="stage-kicker">STAGE 01 · PRE-LAUNCH</span>
+    <!-- ===== MERCURY · ABOUT ===== -->
+    <section class="station align-right" id="about" data-planet="Mercury">
+      <div class="station-content glass reveal">
+        <span class="station-kicker">☿ MERCURY · CLOSEST APPROACH</span>
         <h2 id="about-heading">Mission Briefing</h2>
-      </div>
-      <div class="about-grid">
-        <div class="about-copy reveal" id="about-copy"><!-- injected --></div>
-        <div class="about-stats reveal" id="about-stats"><!-- injected --></div>
+        <div id="about-copy"></div>
+        <div class="about-stats" id="about-stats"></div>
       </div>
     </section>
 
-    <!-- ===== STAGE 2: SKILLS ===== -->
-    <section class="stage" id="skills" data-stage-name="STAGE 2 · IGNITION">
-      <div class="stage-head reveal">
-        <span class="stage-kicker">STAGE 02 · IGNITION</span>
+    <!-- ===== VENUS · SKILLS ===== -->
+    <section class="station align-left" id="skills" data-planet="Venus">
+      <div class="station-content glass reveal">
+        <span class="station-kicker">♀ VENUS · ONBOARD SYSTEMS</span>
         <h2>Onboard Systems</h2>
-        <p class="stage-lead">All systems nominal. Fuel gauges reflect current proficiency.</p>
+        <p class="station-lead">All systems nominal. Gauges reflect current proficiency.</p>
+        <div class="skills-grid" id="skills-grid"></div>
       </div>
-      <div class="skills-grid" id="skills-grid"><!-- injected --></div>
     </section>
 
-    <!-- ===== STAGE 3: PROJECTS ===== -->
-    <section class="stage" id="projects" data-stage-name="STAGE 3 · ORBIT">
-      <div class="stage-head reveal">
-        <span class="stage-kicker">STAGE 03 · ORBIT</span>
+    <!-- ===== EARTH · PROJECTS ===== -->
+    <section class="station align-right" id="projects" data-planet="Earth">
+      <div class="station-content glass reveal">
+        <span class="station-kicker">🌍 EARTH · HOME PORT</span>
         <h2>Payload Manifest</h2>
-        <p class="stage-lead">Missions deployed and cargo delivered.</p>
+        <p class="station-lead">Missions built and cargo delivered from home.</p>
+        <div class="projects-grid" id="projects-grid"></div>
       </div>
-      <div class="projects-grid" id="projects-grid"><!-- injected --></div>
     </section>
 
-    <!-- ===== STAGE 4: EXPERIENCE ===== -->
-    <section class="stage" id="experience" data-stage-name="STAGE 4 · DEEP SPACE">
-      <div class="stage-head reveal">
-        <span class="stage-kicker">STAGE 04 · DEEP SPACE</span>
+    <!-- ===== MARS · EXPERIENCE ===== -->
+    <section class="station align-left" id="experience" data-planet="Mars">
+      <div class="station-content glass reveal">
+        <span class="station-kicker">♂ MARS · FLIGHT LOG</span>
         <h2>Flight Log</h2>
-        <p class="stage-lead">Trajectory so far.</p>
+        <p class="station-lead">Where I've flown so far.</p>
+        <div class="timeline" id="timeline"></div>
       </div>
-      <div class="timeline" id="timeline"><!-- injected --></div>
     </section>
 
-    <!-- ===== STAGE 5: CONTACT ===== -->
-    <section class="stage stage-contact" id="contact" data-stage-name="COMMS">
-      <div class="stage-head reveal">
-        <span class="stage-kicker">COMMS · OPEN CHANNEL</span>
-        <h2>Hail the Ship</h2>
-        <p class="stage-lead">Transmission received on all frequencies.</p>
+    <!-- ===== JUPITER · EDUCATION ===== -->
+    <section class="station align-right" id="education" data-planet="Jupiter">
+      <div class="station-content glass reveal">
+        <span class="station-kicker">♃ JUPITER · ACADEMY</span>
+        <h2>Training Grounds</h2>
+        <p class="station-lead">Where the foundations were forged.</p>
+        <div class="timeline" id="edu-timeline"></div>
       </div>
-      <div class="contact-card reveal">
+    </section>
+
+    <!-- ===== SATURN · CURRENTLY EXPLORING ===== -->
+    <section class="station align-left" id="exploring" data-planet="Saturn">
+      <div class="station-content glass reveal">
+        <span class="station-kicker">♄ SATURN · RINGED FRONTIER</span>
+        <h2 id="exploring-heading">Beyond the Core</h2>
+        <p class="station-lead" id="exploring-lead"></p>
+        <div class="chips explore-chips" id="exploring-grid"></div>
+      </div>
+    </section>
+
+    <!-- ===== URANUS · WAYPOINT ===== -->
+    <section class="station align-right" id="waypoint" data-planet="Uranus">
+      <div class="station-content glass glass-slim reveal">
+        <span class="station-kicker">⛢ URANUS · ICE GIANT</span>
+        <h2>Deep-Space Waypoint</h2>
+        <p class="station-lead">Coasting past the ice giants. Two worlds left before the edge of the system — the transmission window is opening.</p>
+      </div>
+    </section>
+
+    <!-- ===== NEPTUNE · CONTACT / FINALE ===== -->
+    <section class="station align-left station-contact" id="contact" data-planet="Neptune">
+      <div class="station-content glass reveal">
+        <span class="station-kicker">♆ NEPTUNE · OPEN CHANNEL</span>
+        <h2 id="outro-heading">Hail the Ship</h2>
+        <p class="station-lead" id="outro-message">Transmission received on all frequencies.</p>
         <a class="contact-email" id="contact-email" href="#">loading…</a>
-        <div class="contact-links" id="contact-links"><!-- injected --></div>
+        <div class="contact-links" id="contact-links"></div>
+        <button class="relaunch" id="relaunch">↺ RELAUNCH MISSION</button>
       </div>
     </section>
 
     <footer class="footer">
-      <p>© <span id="year"></span> <span id="footer-name">Parag Gupta</span> · Built with vanilla HTML · CSS · JS 🚀</p>
-      <button class="to-top" id="to-top" title="Return to orbit">▲ TOP</button>
+      <p>© <span id="year"></span> <span id="footer-name">Parag Gupta</span> · A Voyager journey · vanilla JS + Three.js 🛰️</p>
+      <button class="to-top" id="to-top" title="Return to the Sun">▲ RETURN TO SUN</button>
     </footer>
 
   </main>
 
+  <!-- Three.js + bloom post-processing (vendored).
+       Order matters: shaders first, then EffectComposer (defines THREE.Pass),
+       then the passes that extend Pass. -->
+  <script src="js/vendor/three.min.js"></script>
+  <script src="js/vendor/CopyShader.js"></script>
+  <script src="js/vendor/LuminosityHighPassShader.js"></script>
+  <script src="js/vendor/EffectComposer.js"></script>
+  <script src="js/vendor/RenderPass.js"></script>
+  <script src="js/vendor/ShaderPass.js"></script>
+  <script src="js/vendor/MaskPass.js"></script>
+  <script src="js/vendor/UnrealBloomPass.js"></script>
   <script src="js/config.js"></script>
+  <script src="js/scene.js"></script>
+  <script src="js/rocket.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>
