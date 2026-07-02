@@ -339,6 +339,40 @@ a { color: inherit; text-decoration: none; }
   text-shadow: 0 0 8px rgba(52,226,255,.5);
 }
 
+/* ---- space-facts info panel ---- */
+.fact-backdrop { position: fixed; inset: 0; z-index: 44; background: rgba(2,4,10,0.5); backdrop-filter: blur(2px); opacity: 0; visibility: hidden; transition: opacity .35s, visibility .35s; }
+.fact-backdrop.show { opacity: 1; visibility: visible; }
+.factpanel {
+  position: fixed; top: 50%; right: clamp(14px, 4vw, 48px); transform: translateY(-50%) translateX(40px);
+  z-index: 45; width: min(360px, 88vw);
+  background: linear-gradient(160deg, rgba(16,22,44,0.92), rgba(8,11,26,0.92));
+  border: 1px solid var(--glass-brd); border-radius: 20px; padding: 26px 24px 22px;
+  backdrop-filter: blur(14px); box-shadow: 0 30px 70px rgba(0,0,0,0.55);
+  opacity: 0; visibility: hidden; transition: opacity .4s ease, transform .4s cubic-bezier(.2,.8,.2,1), visibility .4s;
+}
+.factpanel.show { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
+/* left-side variant so the panel sits opposite the section content */
+.factpanel.left { right: auto; left: clamp(14px, 4vw, 48px); transform: translateY(-50%) translateX(-40px); }
+.factpanel.left.show { transform: translateY(-50%) translateX(0); }
+.fact-close { position: absolute; top: 14px; right: 14px; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--glass-brd); background: transparent; color: var(--ink-dim); font-size: 13px; cursor: pointer; transition: all .2s; }
+.fact-close:hover { color: var(--ink); border-color: var(--cyan); box-shadow: 0 0 14px rgba(52,226,255,.4); }
+.fact-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.fact-dot { width: 18px; height: 18px; border-radius: 50%; flex: none; }
+.fact-name { font-size: 1.5rem; letter-spacing: .5px; }
+.fact-tag { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; color: var(--magenta); text-transform: uppercase; margin-bottom: 18px; }
+.fact-list { list-style: none; }
+.fact-list li { position: relative; padding-left: 24px; margin-bottom: 12px; color: var(--ink); font-size: .96rem; line-height: 1.5; }
+.fact-list li::before { content: "✦"; position: absolute; left: 0; top: 1px; color: var(--cyan); }
+.fact-hint { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--glass-brd); font-family: var(--mono); font-size: 11px; letter-spacing: 1.5px; color: var(--ink-dim); }
+
+/* galaxies: camera flies away, so hide the portfolio content entirely.
+   planets: KEEP the section content visible — just tuck the orbit map away
+   (the panel is placed on the opposite side so nothing overlaps). */
+#mission { transition: opacity .45s ease; }
+body.viewing-space #mission { opacity: 0; pointer-events: none; }
+body.viewing-space .orbitmap,
+body.facts-open .orbitmap { opacity: 0 !important; pointer-events: none; }
+
 .flash { position: fixed; inset: 0; z-index: 40; pointer-events: none; opacity: 0; background: radial-gradient(circle at 50% 50%, rgba(180,240,255,0.9), rgba(120,200,255,0.35) 35%, transparent 70%); }
 .flash.go { animation: warpflash .6s ease-out; }
 @keyframes warpflash { 0% { opacity: 0; transform: scale(1.4); } 22% { opacity: .85; } 100% { opacity: 0; transform: scale(1); } }

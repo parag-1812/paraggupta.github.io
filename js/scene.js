@@ -13,7 +13,9 @@ window.VoyagerScene = (function () {
   let renderer, scene, camera, sunLight, sun, planets = [], starLayers = [];
   let belt, comet, cometTail, raycaster, composer = null;
   let lastT = 0, curFov = 58, container, opts = {};
-  let hovered = -1, boost = 0;
+  let hovered = -1, boost = 0, currentPick = null, pickObj = null;
+  let cine = null;                       // cinematic fly-to-galaxy state
+  const galaxiesByKey = {};
   const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
   let ndc, clickable = [];
 
@@ -36,6 +38,9 @@ window.VoyagerScene = (function () {
   // system-overview camera (progress 0 → see the whole system)
   const OVER_POS = new THREE.Vector3(64, 96, 165);
   const OVER_LOOK = new THREE.Vector3(0, -12, -320);
+  // wide "SYSTEM VIEW" shot — a side-on lineup so every planet is visible
+  const SYS_POS = new THREE.Vector3(650, 120, -392);
+  const SYS_LOOK = new THREE.Vector3(0, -10, -392);
 
   /* ---------- canvas texture helpers ---------- */
   function cv(w, h) { const c = document.createElement("canvas"); c.width = w; c.height = h; return c; }
@@ -171,9 +176,11 @@ window.VoyagerScene = (function () {
     x.fillStyle = g; x.beginPath(); x.arc(0, 0, 26, 0, 6.28); x.fill();
     return new THREE.CanvasTexture(c);
   }
-  function galaxy(hue, x, y, z, s, rot) {
-    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: galaxyTex(hue), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.75 }));
-    spr.position.set(x, y, z); spr.scale.set(s, s, 1); spr.material.rotation = rot; scene.add(spr);
+  function galaxy(key, hue, x, y, z, s, rot) {
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: galaxyTex(hue), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.8, toneMapped: false, fog: false }));
+    spr.position.set(x, y, z); spr.scale.set(s, s, 1); spr.material.rotation = rot;
+    spr.userData.pick = { kind: "galaxy", key };
+    scene.add(spr); clickable.push(spr); galaxiesByKey[key] = spr;
   }
 
   /* ---------- Milky Way band across the far sky ---------- */
@@ -184,7 +191,7 @@ window.VoyagerScene = (function () {
     x.fillStyle = g; x.fillRect(0, 0, w, h);
     for (let i = 0; i < 1400; i++) { x.globalAlpha = rnd(0.05, 0.5); x.fillStyle = ["#cdd6ff", "#fff", "#e7d6ff", "#bcd0ff"][(Math.random() * 4) | 0]; x.fillRect(Math.random() * w, h / 2 + rnd(-h * 0.32, h * 0.32), rnd(0.5, 1.6), rnd(0.5, 1.6)); }
     x.globalAlpha = 1;
-    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.5 }));
+    const spr = new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.5, fog: false }));
     spr.position.set(-60, 30, -TOTAL - 500); spr.scale.set(1900, 480, 1); spr.material.rotation = -0.4; scene.add(spr);
   }
 
@@ -218,7 +225,7 @@ window.VoyagerScene = (function () {
     container.appendChild(renderer.domElement);
 
     scene = new THREE.Scene();
-    scene.fog = new THREE.FogExp2(0x04050c, 0.0018);
+    scene.fog = new THREE.FogExp2(0x04050c, 0.0013);
     camera = new THREE.PerspectiveCamera(curFov, innerWidth / innerHeight, 0.1, 3000);
     camera.position.copy(OVER_POS);
 
@@ -234,7 +241,9 @@ window.VoyagerScene = (function () {
       const grp = new THREE.Group(); grp.position.set(b.x, b.y, -i * SPACING);
       const mat = b.key === "sun" ? new THREE.MeshBasicMaterial({ map: tex("sun"), toneMapped: false }) : new THREE.MeshStandardMaterial({ map: tex(b.key), roughness: 1, metalness: 0 });
       const mesh = new THREE.Mesh(new THREE.SphereGeometry(b.r, 64, 64), mat);
-      mesh.rotation.z = rnd(-0.35, 0.35); mesh.userData.index = i; grp.add(mesh); clickable.push(mesh);
+      mesh.rotation.z = rnd(-0.35, 0.35); mesh.userData.index = i;
+      mesh.userData.pick = { kind: "planet", index: i, key: b.key };
+      grp.add(mesh); clickable.push(mesh);
 
       if (b.key === "sun") {
         const s1 = radialSprite([[0, "rgba(255,220,140,0.95)"], [0.25, "rgba(255,160,60,0.55)"], [0.6, "rgba(255,110,30,0.18)"], [1, "rgba(255,90,20,0)"]]); s1.scale.set(90, 90, 1); grp.add(s1);
@@ -261,7 +270,7 @@ window.VoyagerScene = (function () {
     starLayers.push(starLayer(560, 680, 1.8, 0xffffff));
     nebula("#4a2b8f", -170, 90, -160, 460); nebula("#123a7a", 200, -100, -300, 560); nebula("#7a1f5a", -130, -70, -30, 320); nebula("#1f5a6a", 150, 110, -430, 520);
     milkyway();
-    galaxy("#a9c4ff", -260, 120, -320, 90, 0.6); galaxy("#ffcf9a", 240, -140, -180, 70, -0.3); galaxy("#e6a9ff", -180, -120, -480, 110, 1.1);
+    galaxy("andromeda", "#a9c4ff", -330, 150, -900, 240, 0.6); galaxy("triangulum", "#ffcf9a", 320, -180, -640, 170, -0.3); galaxy("whirlpool", "#e6a9ff", -280, -160, -1180, 300, 1.1);
     asteroidBelt(); makeComet(); makeMeteors(4);
 
     // bloom (optional — vendored postprocessing). Never let it break the scene.
@@ -279,11 +288,27 @@ window.VoyagerScene = (function () {
       mouse.tx = (e.clientX / innerWidth - 0.5) * 2; mouse.ty = (e.clientY / innerHeight - 0.5) * 2;
       ndc.x = (e.clientX / innerWidth) * 2 - 1; ndc.y = -(e.clientY / innerHeight) * 2 + 1;
     });
-    renderer.domElement.addEventListener("click", () => { if (hovered >= 0 && opts.onSelect) { opts.onSelect(hovered); jump(); } });
+    renderer.domElement.addEventListener("click", () => {
+      if (currentPick && opts.onSelect) { opts.onSelect(currentPick); if (currentPick.kind === "planet") jump(); }
+    });
     return true;
   }
 
-  function jump() { boost = 1; }
+  function jump() { boost = 1; if (cine && cine.phase === "system") cine = null; }
+
+  // cinematic wide shot of the whole system (exits on scroll)
+  function systemView() { cine = { phase: "system", pos: SYS_POS.clone(), look: SYS_LOOK.clone() }; boost = 1; }
+
+  // cinematic: fly the camera out to a galaxy, then (later) back home
+  function flyTo(pick) {
+    if (!pick || pick.kind !== "galaxy") return;
+    const g = galaxiesByKey[pick.key]; if (!g) return;
+    const G = g.position.clone();
+    const pos = G.clone().add(new THREE.Vector3(0, 18, 250));   // in front & slightly above
+    cine = { phase: "going", pos, look: G, pick, arrived: false };
+    boost = 1;
+  }
+  function returnHome() { if (cine) cine.phase = "returning"; }
 
   /* ====================================================================
      UPDATE
@@ -304,24 +329,43 @@ window.VoyagerScene = (function () {
     const by = BODIES[i0].y + (BODIES[i1].y - BODIES[i0].y) * f;
 
     const travelPos = new THREE.Vector3(0, 3, tz);
-    const target = OVER_POS.clone().lerp(travelPos, blend);
-    target.x += mouse.x * 6; target.y += -mouse.y * 4;
-    camera.position.lerp(target, Math.min(1, dt * 4.5));
-
+    const scrollPos = OVER_POS.clone().lerp(travelPos, blend);
+    scrollPos.x += mouse.x * 6; scrollPos.y += -mouse.y * 4;
     const travelLook = new THREE.Vector3(bx * 0.18 + mouse.x * 5, 3 + by * 0.12 - mouse.y * 4, tz - 100);
-    const look = OVER_LOOK.clone().lerp(travelLook, blend);
-    camera.lookAt(look);
+    const scrollLook = OVER_LOOK.clone().lerp(travelLook, blend);
+
+    // choose camera target: scroll-driven, or a cinematic override
+    let camTarget = scrollPos, camLook = scrollLook, lerpF = dt * 4.5;
+    if (cine) {
+      if (cine.phase === "system") {                      // wide system view
+        lerpF = dt * 2.2; camTarget = cine.pos; camLook = cine.look;
+        if (velocity > 0.6) cine = null;                  // any scroll exits
+      } else if (cine.phase === "going") {                // flying out to a galaxy
+        lerpF = dt * 1.7; camTarget = cine.pos; camLook = cine.look;
+        if (!cine.arrived && camera.position.distanceTo(cine.pos) < 9) { cine.arrived = true; if (opts.onArrive) opts.onArrive(cine.pick); }
+      } else {                                            // returning home
+        lerpF = dt * 1.7; camTarget = scrollPos; camLook = scrollLook;
+        if (camera.position.distanceTo(scrollPos) < 7) cine = null;
+      }
+    }
+    camera.position.lerp(camTarget, Math.min(1, lerpF));
+    camera.lookAt(camLook);
 
     boost *= 0.90;
     const targetFov = 58 + Math.min(10, velocity * 0.06) + boost * 16;
     curFov += (targetFov - curFov) * Math.min(1, dt * 5);
     camera.fov = curFov; camera.updateProjectionMatrix();
 
-    // hover raycast
+    // hover raycast (planets need to be near; galaxies clickable at any range)
     raycaster.setFromCamera(ndc, camera);
     const hits = raycaster.intersectObjects(clickable, false);
-    hovered = (hits.length && hits[0].distance < 220) ? hits[0].object.userData.index : -1;
-    renderer.domElement.style.cursor = hovered >= 0 ? "pointer" : "default";
+    currentPick = null; pickObj = null;
+    if (hits.length) {
+      const o = hits[0].object, pk = o.userData.pick;
+      if (pk && (pk.kind === "galaxy" || hits[0].distance < 320)) { currentPick = pk; pickObj = o; }
+    }
+    hovered = (currentPick && currentPick.kind === "planet") ? currentPick.index : -1;
+    renderer.domElement.style.cursor = currentPick ? "pointer" : "default";
 
     for (let i = 0; i < planets.length; i++) {
       const g = planets[i];
@@ -358,8 +402,11 @@ window.VoyagerScene = (function () {
     }
 
     if (opts.onHover) {
-      if (hovered >= 0) { const v = planets[hovered].position.clone(); v.project(camera); if (v.z < 1) opts.onHover(hovered, (v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight); else opts.onHover(-1); }
-      else opts.onHover(-1);
+      if (currentPick && pickObj) {
+        const v = new THREE.Vector3(); pickObj.getWorldPosition(v); v.project(camera);
+        if (v.z < 1) opts.onHover(currentPick, (v.x * 0.5 + 0.5) * innerWidth, (-v.y * 0.5 + 0.5) * innerHeight);
+        else opts.onHover(null);
+      } else opts.onHover(null);
     }
 
     starLayers.forEach((s, k) => { s.rotation.z += dt * 0.005 * (k + 1); });
@@ -373,5 +420,5 @@ window.VoyagerScene = (function () {
     if (composer) composer.setSize(innerWidth, innerHeight);
   }
 
-  return { init, update, resize, jump };
+  return { init, update, resize, jump, flyTo, returnHome, systemView };
 })();

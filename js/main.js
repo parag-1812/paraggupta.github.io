@@ -17,6 +17,23 @@
   const SECTIONS = ["top", "about", "skills", "projects", "experience", "education", "exploring", "waypoint", "contact"];
   const PLANET = ["Sun", "Mercury", "Venus", "Earth", "Mars", "Jupiter", "Saturn", "Uranus", "Neptune"];
   const DEST   = ["Home", "Briefing", "Systems", "Projects", "Flight Log", "Education", "Exploring", "Waypoint", "Comms"];
+  const PLANET_KEY = ["sun", "mercury", "venus", "earth", "mars", "jupiter", "saturn", "uranus", "neptune"];
+
+  // Punchy space facts for the info panel (planets + clickable galaxies)
+  const FACTS = {
+    sun:      { name: "The Sun", tag: "Our home star · G-type", color: "#ffb43c", facts: ["1.3 million Earths would fit inside it", "Surface burns at ~5,500°C", "Its light takes 8 minutes to reach us"] },
+    mercury:  { name: "Mercury", tag: "Smallest planet · closest to the Sun", color: "#9a938a", facts: ["A whole year lasts just 88 days", "Days above 400°C, nights below −170°C", "No moons and almost no atmosphere"] },
+    venus:    { name: "Venus", tag: "The hottest planet", color: "#d9a441", facts: ["It spins backwards", "A day is longer than its year", "Surface ~465°C — hot enough to melt lead"] },
+    earth:    { name: "Earth", tag: "The pale blue dot · home", color: "#3f8fe0", facts: ["The only world known to host life", "71% of it is covered by water", "Races around the Sun at 30 km every second"] },
+    mars:     { name: "Mars", tag: "The red planet", color: "#c1502a", facts: ["Home to Olympus Mons — the tallest volcano in the system", "Has two tiny moons: Phobos & Deimos", "A day is 24h 37m, almost like Earth"] },
+    jupiter:  { name: "Jupiter", tag: "The largest planet", color: "#c99a5b", facts: ["Over 1,300 Earths would fit inside", "The Great Red Spot is a 350-year-old storm", "Has 95+ known moons"] },
+    saturn:   { name: "Saturn", tag: "The ringed jewel", color: "#e8d3a4", facts: ["So light it would float on water", "Its rings are mostly ice and rock", "Has 140+ known moons"] },
+    uranus:   { name: "Uranus", tag: "The sideways ice giant", color: "#a3e2ec", facts: ["Rotates on its side at a 98° tilt", "Coldest planet: about −224°C", "It rolls around the Sun like a barrel"] },
+    neptune:  { name: "Neptune", tag: "The windy blue giant", color: "#3a55c9", facts: ["Winds rip at up to 2,100 km/h — fastest in the system", "Farthest planet: 30 AU from the Sun", "One year = 165 Earth years"] },
+    andromeda:  { name: "Andromeda Galaxy", tag: "Nearest major galaxy", color: "#a9c4ff", facts: ["2.5 million light-years away", "On a collision course with the Milky Way (~4.5 billion yrs)", "Holds around 1 trillion stars"] },
+    triangulum: { name: "Triangulum Galaxy", tag: "3rd-largest in our Local Group", color: "#ffcf9a", facts: ["~2.7 million light-years away", "Home to about 40 billion stars", "Possibly a satellite of Andromeda"] },
+    whirlpool:  { name: "Whirlpool Galaxy", tag: "The classic spiral", color: "#e6a9ff", facts: ["~31 million light-years away", "First galaxy ever classified as a spiral", "Locked in a slow dance with a smaller galaxy"] },
+  };
 
   /* typewriter that types / deletes through a list of words, forever */
   function typewriter(el, words) {
@@ -32,7 +49,7 @@
     })();
   }
 
-  let scene3D = false;
+  let scene3D = false, factMode = null, factTimer = 0;
   let curProgress = 0, lastScrollY = 0, velocity = 0;
 
   /* ======================================================================
@@ -263,14 +280,67 @@
     f.classList.remove("go"); void f.offsetWidth;   // restart animation
     f.classList.add("go");
   }
-  function onHover(i, x, y) {
+  function onHover(pick, x, y) {
     const ret = $("#reticle");
-    if (i < 0) { ret.classList.remove("show"); return; }
+    if (!pick) { ret.classList.remove("show"); return; }
     ret.classList.add("show");
     ret.style.transform = `translate(${x}px, ${y}px)`;
-    $("#reticle-label").textContent = `${PLANET[i].toUpperCase()} · ${DEST[i]} ▸ CLICK TO TRAVEL`;
+    if (pick.kind === "planet") {
+      $("#reticle-label").textContent = `${PLANET[pick.index].toUpperCase()} · ${DEST[pick.index]} ▸ CLICK TO TRAVEL`;
+    } else {
+      const f = FACTS[pick.key];
+      $("#reticle-label").textContent = `${(f ? f.name : "GALAXY").toUpperCase()} ▸ CLICK FOR FACTS`;
+    }
   }
-  function onSelect(i) { flashJump(); goTo(i); }
+  // Unified: planets and galaxies use the SAME facts panel. While it's open the
+  // overlapping content is hidden; planets auto-dismiss, galaxies fly back on close.
+  // panel sits opposite the section's content (align-right content → panel left)
+  function planetPanelSide(index) {
+    const sec = document.getElementById(SECTIONS[index]);
+    return sec && sec.classList.contains("align-right") ? "left" : "right";
+  }
+  function onSelect(pick) {
+    clearTimeout(factTimer);
+    if (pick.kind === "planet") {
+      factMode = "planet";
+      document.body.classList.add("facts-open");         // keep content, hide orbit map
+      openFacts(PLANET_KEY[pick.index], true, planetPanelSide(pick.index));
+      flashJump(); goTo(pick.index);
+      factTimer = setTimeout(closeFacts, 8000);          // auto-dismiss
+    } else if (scene3D) {
+      factMode = "galaxy";
+      document.body.classList.add("viewing-space");      // camera leaves → hide content
+      document.body.style.overflow = "hidden";
+      flashJump();
+      VoyagerScene.flyTo(pick);                          // facts open on arrival
+    } else {
+      factMode = "galaxy"; openFacts(pick.key, false, "right");
+    }
+  }
+  function onArrive(pick) { openFacts(pick.key, false, "right"); }
+
+  /* ---- facts info panel (shared by planets + galaxies) ---- */
+  function openFacts(key, isPlanet, side) {
+    const f = FACTS[key]; if (!f) return;
+    const dot = $("#fact-dot");
+    dot.style.background = f.color; dot.style.boxShadow = `0 0 22px ${f.color}`;
+    $("#fact-name").textContent = f.name;
+    $("#fact-tag").textContent = f.tag;
+    $("#fact-list").innerHTML = f.facts.map((x) => `<li>${esc(x)}</li>`).join("");
+    $("#fact-hint").textContent = isPlanet ? "Clears shortly · ✕ / ESC to close now" : "Close (✕ / ESC) to fly back to the system";
+    const panel = $("#factpanel");
+    panel.classList.toggle("left", side === "left");
+    panel.classList.add("show");
+  }
+  function closeFacts() {
+    if (!factMode) return;
+    clearTimeout(factTimer);
+    $("#factpanel").classList.remove("show");
+    document.body.classList.remove("viewing-space", "facts-open");   // reveal UI
+    document.body.style.overflow = "";
+    if (factMode === "galaxy" && scene3D) VoyagerScene.returnHome();
+    factMode = null;
+  }
 
   /* ======================================================================
      MISC
@@ -278,10 +348,28 @@
   function misc() {
     const toTop = () => scrollTo({ top: 0, behavior: "smooth" });
     $("#to-top").addEventListener("click", toTop);
-    const sv = $("#system-view"); if (sv) sv.addEventListener("click", toTop);
     const rl = $("#relaunch"); if (rl) rl.addEventListener("click", toTop);
+    // SYSTEM VIEW → cinematic wide shot of every planet (scroll to exit)
+    const sv = $("#system-view");
+    if (sv) sv.addEventListener("click", () => {
+      closeFacts();
+      if (scene3D) VoyagerScene.systemView();
+      else scrollTo({ top: 0, behavior: "smooth" });
+    });
     omDots().forEach((d, i) => d.addEventListener("click", () => { if (scene3D) VoyagerScene.jump(); flashJump(); goTo(i); }));
     addEventListener("resize", () => { if (scene3D) VoyagerScene.resize(); });
+    // facts panel close
+    $("#fact-close").addEventListener("click", closeFacts);
+    $("#fact-backdrop").addEventListener("click", closeFacts);
+    addEventListener("keydown", (e) => { if (e.key === "Escape") closeFacts(); });
+    // a real user scroll dismisses an open PLANET panel (so it never lingers
+    // over the next section). Programmatic travel-scroll doesn't fire these.
+    const dismissPlanet = () => { if (factMode === "planet") closeFacts(); };
+    addEventListener("wheel", dismissPlanet, { passive: true });
+    addEventListener("touchmove", dismissPlanet, { passive: true });
+    addEventListener("keydown", (e) => {
+      if (factMode === "planet" && ["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " ", "Spacebar"].includes(e.key)) closeFacts();
+    });
   }
 
   /* ---- boot ---- */
@@ -290,7 +378,7 @@
     render();
 
     // Try the 3D scene; fall back to a 2D starfield if WebGL/Three is missing.
-    scene3D = !!(window.VoyagerScene && VoyagerScene.init($("#scene"), { onHover, onSelect }));
+    scene3D = !!(window.VoyagerScene && VoyagerScene.init($("#scene"), { onHover, onSelect, onArrive }));
     if (!scene3D) { console.warn("WebGL unavailable — using 2D fallback"); starfield2D(); }
 
     launchSequence();
