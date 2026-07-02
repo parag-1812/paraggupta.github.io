@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parag Gupta · Mission Control</title>
+  <meta name="description" content="Portfolio of Parag Gupta — Java Developer. A rocket mission through my skills, projects, and experience." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <!-- Deep-space animated background -->
+  <canvas id="starfield"></canvas>
+
+  <!-- ================= LAUNCH INTRO OVERLAY ================= -->
+  <div id="launch-screen">
+    <div class="launch-inner">
+      <div class="launch-badge">MISSION&nbsp;CONTROL</div>
+      <h1 class="launch-name" id="launch-name">PARAG GUPTA</h1>
+      <p class="launch-sub" id="launch-title">Java Developer</p>
+
+      <button id="launch-btn" class="launch-btn">
+        <span class="launch-btn-label">INITIATE LAUNCH</span>
+        <span class="launch-btn-glow"></span>
+      </button>
+
+      <div id="countdown" class="countdown" aria-hidden="true"></div>
+      <p class="launch-hint">Press to begin the mission</p>
+    </div>
+    <div class="rocket-liftoff" id="rocket-liftoff">
+      <div class="rocket-emoji">🚀</div>
+      <div class="rocket-flame"></div>
+    </div>
+  </div>
+
+  <!-- ================= NAV / HUD ================= -->
+  <nav id="hud" class="hud" aria-label="Mission navigation">
+    <div class="hud-brand">
+      <span class="hud-dot"></span>
+      <span id="hud-callsign">PARAG</span>
+    </div>
+    <ul class="hud-links">
+      <li><a href="#about" data-stage="1">Briefing</a></li>
+      <li><a href="#skills" data-stage="2">Systems</a></li>
+      <li><a href="#projects" data-stage="3">Payload</a></li>
+      <li><a href="#experience" data-stage="4">Log</a></li>
+      <li><a href="#contact" data-stage="5">Comms</a></li>
+    </ul>
+    <a href="#contact" class="hud-cta">Hail Me</a>
+  </nav>
+
+  <!-- Altitude / progress rail -->
+  <div class="altitude-rail" aria-hidden="true">
+    <div class="altitude-fill" id="altitude-fill"></div>
+    <span class="altitude-label" id="altitude-label">GROUND</span>
+  </div>
+
+  <main id="mission">
+
+    <!-- ===== HERO ===== -->
+    <header class="hero" id="top">
+      <div class="hero-inner reveal">
+        <div class="hero-status" id="hero-status">● Available for new missions</div>
+        <h1 class="hero-name" id="hero-name">PARAG GUPTA</h1>
+        <p class="hero-title" id="hero-title">Java Developer</p>
+        <p class="hero-tagline" id="hero-tagline"></p>
+        <div class="hero-meta">
+          <span id="hero-location"></span>
+        </div>
+        <div class="hero-actions">
+          <a href="#projects" class="btn btn-primary">View Payload</a>
+          <a href="#contact" class="btn btn-ghost">Open Comms</a>
+        </div>
+      </div>
+      <div class="scroll-cue" aria-hidden="true">
+        <span>SCROLL TO ASCEND</span>
+        <div class="scroll-cue-line"></div>
+      </div>
+    </header>
+
+    <!-- ===== STAGE 1: ABOUT ===== -->
+    <section class="stage" id="about" data-stage-name="STAGE 1 · PRE-LAUNCH">
+      <div class="stage-head reveal">
+        <span class="stage-kicker">STAGE 01 · PRE-LAUNCH</span>
+        <h2 id="about-heading">Mission Briefing</h2>
+      </div>
+      <div class="about-grid">
+        <div class="about-copy reveal" id="about-copy"><!-- injected --></div>
+        <div class="about-stats reveal" id="about-stats"><!-- injected --></div>
+      </div>
+    </section>
+
+    <!-- ===== STAGE 2: SKILLS ===== -->
+    <section class="stage" id="skills" data-stage-name="STAGE 2 · IGNITION">
+      <div class="stage-head reveal">
+        <span class="stage-kicker">STAGE 02 · IGNITION</span>
+        <h2>Onboard Systems</h2>
+        <p class="stage-lead">All systems nominal. Fuel gauges reflect current proficiency.</p>
+      </div>
+      <div class="skills-grid" id="skills-grid"><!-- injected --></div>
+    </section>
+
+    <!-- ===== STAGE 3: PROJECTS ===== -->
+    <section class="stage" id="projects" data-stage-name="STAGE 3 · ORBIT">
+      <div class="stage-head reveal">
+        <span class="stage-kicker">STAGE 03 · ORBIT</span>
+        <h2>Payload Manifest</h2>
+        <p class="stage-lead">Missions deployed and cargo delivered.</p>
+      </div>
+      <div class="projects-grid" id="projects-grid"><!-- injected --></div>
+    </section>
+
+    <!-- ===== STAGE 4: EXPERIENCE ===== -->
+    <section class="stage" id="experience" data-stage-name="STAGE 4 · DEEP SPACE">
+      <div class="stage-head reveal">
+        <span class="stage-kicker">STAGE 04 · DEEP SPACE</span>
+        <h2>Flight Log</h2>
+        <p class="stage-lead">Trajectory so far.</p>
+      </div>
+      <div class="timeline" id="timeline"><!-- injected --></div>
+    </section>
+
+    <!-- ===== STAGE 5: CONTACT ===== -->
+    <section class="stage stage-contact" id="contact" data-stage-name="COMMS">
+      <div class="stage-head reveal">
+        <span class="stage-kicker">COMMS · OPEN CHANNEL</span>
+        <h2>Hail the Ship</h2>
+        <p class="stage-lead">Transmission received on all frequencies.</p>
+      </div>
+      <div class="contact-card reveal">
+        <a class="contact-email" id="contact-email" href="#">loading…</a>
+        <div class="contact-links" id="contact-links"><!-- injected --></div>
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>© <span id="year"></span> <span id="footer-name">Parag Gupta</span> · Built with vanilla HTML · CSS · JS 🚀</p>
+      <button class="to-top" id="to-top" title="Return to orbit">▲ TOP</button>
+    </footer>
+
+  </main>
+
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
