@@ -8,20 +8,30 @@
 window.VoyagerAudio = (function () {
   "use strict";
 
-  let ctx = null, master = null, ambient = null, started = false;
+  let ctx = null, master = null, reverb = null, ambient = null, started = false;
   let enabled = (localStorage.getItem("voyager-sound") !== "off");
 
+  function impulse(dur, decay) {
+    const len = Math.floor(ctx.sampleRate * dur), b = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = b.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay); }
+    return b;
+  }
   function init() {
     if (started) return started;
     const AC = window.AudioContext || window.webkitAudioContext;
     if (!AC) return false;
     ctx = new AC();
     master = ctx.createGain();
-    master.gain.value = enabled ? 0.55 : 0.0;
+    master.gain.value = enabled ? 0.5 : 0.0;
     master.connect(ctx.destination);
+    // spatial reverb send → gives everything a deep-space tail
+    reverb = ctx.createConvolver(); reverb.buffer = impulse(2.6, 2.4);
+    const rg = ctx.createGain(); rg.gain.value = 0.32; reverb.connect(rg).connect(master);
     started = true;
     return true;
   }
+  // route a source gain to both the dry master and the reverb send
+  function out(g) { g.connect(master); if (reverb) g.connect(reverb); }
   function resume() { if (ctx && ctx.state === "suspended") ctx.resume(); }
 
   function noiseBuffer(dur) {
@@ -41,7 +51,7 @@ window.VoyagerAudio = (function () {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(vol || 0.25, t + 0.012);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    o.connect(g).connect(master); o.start(t); o.stop(t + dur + 0.03);
+    o.connect(g); out(g); o.start(t); o.stop(t + dur + 0.03);
   }
 
   function countdownBeep(final) {
@@ -50,7 +60,8 @@ window.VoyagerAudio = (function () {
     tone(880, 0.16, "sine", 0.12);       // harmonic sparkle
   }
 
-  function blip(up) { tone(up ? 660 : 520, 0.08, "triangle", 0.14, up ? 990 : 380); }
+  function blip(up) { tone(up ? 620 : 500, 0.07, "triangle", 0.08, up ? 900 : 380); }
+  function chime() { tone(659.25, 0.5, "sine", 0.13); setTimeout(() => tone(987.77, 0.6, "sine", 0.1), 90); }
 
   /* ---- rocket launch rumble ---- */
   function launch() {
@@ -66,7 +77,7 @@ window.VoyagerAudio = (function () {
     g.gain.linearRampToValueAtTime(0.6, t + 0.35);
     g.gain.linearRampToValueAtTime(0.5, t + 1.6);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    src.connect(lp).connect(g).connect(master); src.start(t); src.stop(t + dur);
+    src.connect(lp).connect(g); out(g); src.start(t); src.stop(t + dur);
     // sub-bass weight
     const o = ctx.createOscillator(); o.type = "sine";
     o.frequency.setValueAtTime(64, t); o.frequency.exponentialRampToValueAtTime(28, t + dur);
@@ -89,7 +100,7 @@ window.VoyagerAudio = (function () {
     g.gain.setValueAtTime(0.0001, t);
     g.gain.exponentialRampToValueAtTime(vol || 0.22, t + dur * 0.35);
     g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    src.connect(bp).connect(g).connect(master); src.start(t); src.stop(t + dur);
+    src.connect(bp).connect(g); out(g); src.start(t); src.stop(t + dur);
   }
 
   /* ---- black-hole dive: deep descending roar ---- */
@@ -101,7 +112,7 @@ window.VoyagerAudio = (function () {
     lp.frequency.setValueAtTime(1600, t); lp.frequency.exponentialRampToValueAtTime(80, t + dur);
     const g = ctx.createGain();
     g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(0.5, t + 0.5); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-    src.connect(lp).connect(g).connect(master); src.start(t); src.stop(t + dur);
+    src.connect(lp).connect(g); out(g); src.start(t); src.stop(t + dur);
     const o = ctx.createOscillator(); o.type = "sawtooth";
     o.frequency.setValueAtTime(140, t); o.frequency.exponentialRampToValueAtTime(24, t + dur);
     const og = ctx.createGain(); og.gain.setValueAtTime(0.0001, t); og.gain.linearRampToValueAtTime(0.3, t + 0.4); og.gain.exponentialRampToValueAtTime(0.0001, t + dur);
@@ -141,5 +152,5 @@ window.VoyagerAudio = (function () {
   function toggle() { setEnabled(!enabled); resume(); return enabled; }
   function isEnabled() { return enabled; }
 
-  return { init, resume, countdownBeep, launch, whoosh, dive, blip, ambientStart, ambientStop, setEnabled, toggle, isEnabled };
+  return { init, resume, countdownBeep, launch, whoosh, dive, blip, chime, ambientStart, ambientStop, setEnabled, toggle, isEnabled };
 })();

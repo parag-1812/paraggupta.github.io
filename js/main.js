@@ -49,7 +49,7 @@
     })();
   }
 
-  let scene3D = false, factMode = null, factTimer = 0;
+  let scene3D = false, factMode = null, factTimer = 0, lastHoverKey = null;
   let curProgress = 0, lastScrollY = 0, velocity = 0;
 
   /* ======================================================================
@@ -298,6 +298,8 @@
   }
   function onHover(pick, x, y) {
     const ret = $("#reticle");
+    const key = pick ? pick.kind + ":" + (pick.index != null ? pick.index : pick.key) : null;
+    if (key !== lastHoverKey) { if (pick && window.VoyagerAudio) VoyagerAudio.blip(true); lastHoverKey = key; }
     if (!pick) { ret.classList.remove("show"); return; }
     ret.classList.add("show");
     ret.style.transform = `translate(${x}px, ${y}px)`;
@@ -336,7 +338,7 @@
       factMode = "galaxy"; openFacts(pick.key, false, "right");
     }
   }
-  function onArrive(pick) { openFacts(pick.key, false, "right"); }
+  function onArrive(pick) { if (window.VoyagerAudio) VoyagerAudio.chime(); openFacts(pick.key, false, "right"); }
 
   /* ---- facts info panel (shared by planets + galaxies) ---- */
   function openFacts(key, isPlanet, side) {

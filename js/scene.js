@@ -12,6 +12,7 @@ window.VoyagerScene = (function () {
 
   let renderer, scene, camera, sunLight, sun, planets = [], starLayers = [];
   let belt, comet, cometTail, raycaster, composer = null, blackhole = null;
+  let streaks = null; const streakSeg = [];
   let lastT = 0, curFov = 58, container, opts = {};
   let hovered = -1, boost = 0, currentPick = null, pickObj = null;
   let cine = null;                       // cinematic fly-to-galaxy state
@@ -265,6 +266,15 @@ window.VoyagerScene = (function () {
     const sunFill = new THREE.DirectionalLight(0xfff0d8, 0.22); sunFill.position.set(0, 6, 20); scene.add(sunFill);
     const headlight = new THREE.PointLight(0xbfd2ff, 0.35, 700); camera.add(headlight); scene.add(camera);
 
+    // hyperspace warp streaks (parented to the camera; brighten with speed)
+    (function buildStreaks() {
+      const N = 150, geo = new THREE.BufferGeometry(), pos = new Float32Array(N * 2 * 3);
+      for (let i = 0; i < N; i++) { const a = Math.random() * 6.28, r = 6 + Math.random() * 72; streakSeg.push({ x: Math.cos(a) * r, y: Math.sin(a) * r, z: -(20 + Math.random() * 180) }); }
+      geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
+      streaks = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xcfeaff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, fog: false }));
+      streaks.frustumCulled = false; camera.add(streaks);
+    })();
+
     BODIES.forEach((b, i) => {
       const grp = new THREE.Group(); grp.position.set(b.x, b.y, -i * SPACING);
       const mat = b.key === "sun" ? new THREE.MeshBasicMaterial({ map: tex("sun"), toneMapped: false }) : new THREE.MeshStandardMaterial({ map: tex(b.key), roughness: 1, metalness: 0 });
@@ -387,6 +397,23 @@ window.VoyagerScene = (function () {
     }
     camera.position.lerp(camTarget, Math.min(1, lerpF));
     camera.lookAt(camLook);
+    camera.rotation.z += mouse.x * 0.05;                 // subtle cinematic banking
+
+    // warp streaks — appear & stretch with travel speed
+    if (streaks) {
+      const spd = Math.min(1, velocity * 0.03 + boost * 0.5);
+      const targetOp = spd > 0.06 ? Math.min(0.85, spd) : 0;
+      streaks.material.opacity += (targetOp - streaks.material.opacity) * Math.min(1, dt * 6);
+      const pos = streaks.geometry.attributes.position.array;
+      const move = (18 + spd * 460) * dt, len = 4 + spd * 70;
+      for (let i = 0; i < streakSeg.length; i++) {
+        const s = streakSeg[i]; s.z += move;
+        if (s.z > 8) { const a = Math.random() * 6.28, r = 6 + Math.random() * 72; s.x = Math.cos(a) * r; s.y = Math.sin(a) * r; s.z = -(130 + Math.random() * 90); }
+        pos[i * 6] = s.x; pos[i * 6 + 1] = s.y; pos[i * 6 + 2] = s.z;
+        pos[i * 6 + 3] = s.x; pos[i * 6 + 4] = s.y; pos[i * 6 + 5] = s.z + len;
+      }
+      streaks.geometry.attributes.position.needsUpdate = true;
+    }
 
     boost *= 0.90;
     const targetFov = 58 + Math.min(10, velocity * 0.06) + boost * 16;

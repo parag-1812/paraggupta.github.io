@@ -34,6 +34,8 @@ a { color: inherit; text-decoration: none; }
 .scene { position: fixed; inset: 0; z-index: 0; }
 .scene canvas { display: block; }
 #starfield { position: fixed; inset: 0; z-index: 0; display: none; }
+/* filmic vignette for a cinematic frame */
+.vignette { position: fixed; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(ellipse 75% 75% at 50% 50%, transparent 58%, rgba(2,3,8,0.55) 100%); }
 
 #hud, .telemetry, .orbitmap, #mission, #launch-screen { position: relative; z-index: 3; }
 
