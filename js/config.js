@@ -121,6 +121,12 @@ const CONFIG = {
   // Add a `link` (GitHub/live URL) to any project to show an "OPEN DOCK" link.
   projects: [
     {
+      name: "The Handshake Protocol",
+      blurb: "A decentralized identity & trust protocol: any two entities — AI agents, apps, services — prove who they are and what they can do using public-key passports, with no central server, registry, or login. Includes a reference library, signed capability invocation, a web of trust, and cross-language conformance vectors.",
+      tags: ["Node.js", "WebCrypto", "Cryptography", "Decentralized", "Protocol Design"],
+      link: "",
+    },
+    {
       name: "CloudKitchenX",
       blurb: "Distributed cloud-kitchen management system. A scalable order-management platform with clean-architecture microservices, custom ingredient-based orders, accurate pricing & prep-time estimation, plus inventory-reservation logic for transactional integrity.",
       tags: ["Java", "Spring Boot", "Microservices", "REST APIs", "Docker", "PostgreSQL"],

@@ -465,6 +465,52 @@ body.diving #mission, body.diving .telemetry, body.diving .orbitmap, body.diving
   .station-content { max-width: 640px; }
 }
 
+/* ---- tablets / small ---- */
+@media (max-width: 820px) {
+  .station, .station-hero { min-height: 100svh; }
+  .hud { padding: 12px 16px; }
+  .hud-right { gap: 8px; }
+  .hud-cta { padding: 8px 14px; font-size: 11px; }
+  .hud-sound { width: 34px; height: 34px; }
+}
+
+/* ---- phones ---- */
+@media (max-width: 640px) {
+  .hud { padding: 10px 12px; }
+  .hud-brand { font-size: 12px; letter-spacing: 2px; }
+
+  /* facts panel → bottom sheet so it never sits over side content */
+  .factpanel, .factpanel.left {
+    left: 50%; right: auto; top: auto; bottom: 12px;
+    transform: translate(-50%, 26px); width: min(94vw, 460px); max-height: 62vh; overflow-y: auto;
+  }
+  .factpanel.show, .factpanel.left.show { transform: translate(-50%, 0); }
+  .fact-name { font-size: 1.3rem; }
+
+  .glass { padding: 20px 18px; border-radius: 18px; }
+  .station-content h2 { font-size: clamp(1.6rem, 7vw, 2.2rem); }
+  .station { padding: 90px 16px 60px; }
+
+  .avatar-ring { width: 116px; height: 116px; }
+  .hero-actions { gap: 10px; }
+  .btn { padding: 13px 22px; font-size: 12px; }
+
+  /* launch page fits small screens */
+  .launch-inner { transform: translateY(-64px); }
+  .pad { transform: translateX(-50%) scale(1.15); }
+  .launch-badge { font-size: 10px; letter-spacing: 3px; }
+  .launch-name { letter-spacing: 2px; }
+
+  .voidhint { font-size: 10px; }
+  .wishtip { bottom: 74px; }
+  .projects-grid, .skills-grid { grid-template-columns: 1fr; }
+}
+
+/* ---- very small: trim HUD extras (scroll still gives system view) ---- */
+@media (max-width: 560px) {
+  .hud-system { display: none; }
+}
+
 /* =========================================================================
    Accessibility: respect reduced motion
    ========================================================================= */

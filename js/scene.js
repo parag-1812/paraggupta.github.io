@@ -20,6 +20,8 @@ window.VoyagerScene = (function () {
   const galaxiesByKey = {};
   const mouse = { x: 0, y: 0, tx: 0, ty: 0 };
   let ndc, clickable = [];
+  const isMobile = (typeof matchMedia !== "undefined" && matchMedia("(max-width: 820px)").matches) || (navigator.maxTouchPoints > 0 && innerWidth < 900);
+  const Q = isMobile ? 0.5 : 1;           // quality scale for particle counts
 
   const SPACING = 98;
   const START_Z = 48;
@@ -134,7 +136,7 @@ window.VoyagerScene = (function () {
   function nebula(color, x, y, z, s) { const spr = radialSprite([[0, color + "55"], [0.5, color + "18"], [1, color + "00"]]); spr.material.opacity = 0.6; spr.position.set(x, y, z); spr.scale.set(s, s, 1); scene.add(spr); }
 
   function asteroidBelt() {
-    const count = 900, g = new THREE.BufferGeometry(), pos = new Float32Array(count * 3); const zc = -4.5 * SPACING;
+    const count = Math.round(900 * Q), g = new THREE.BufferGeometry(), pos = new Float32Array(count * 3); const zc = -4.5 * SPACING;
     for (let i = 0; i < count; i++) { const a = Math.random() * 6.28, rr = rnd(34, 74); pos[i * 3] = Math.cos(a) * rr; pos[i * 3 + 1] = Math.sin(a) * rr * 0.42 + rnd(-4, 4); pos[i * 3 + 2] = zc + Math.sin(a) * rr * 0.42 + rnd(-10, 10); }
     g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     belt = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xb9a48c, size: 0.9, transparent: true, opacity: 0.85, depthWrite: false })); scene.add(belt);
@@ -264,7 +266,7 @@ window.VoyagerScene = (function () {
     if (!renderer || !renderer.getContext()) return false;
 
     ndc = new THREE.Vector2(-2, -2); raycaster = new THREE.Raycaster();
-    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(devicePixelRatio || 1, isMobile ? 1.5 : 2));
     renderer.setSize(innerWidth, innerHeight);
     // filmic tone mapping compresses highlights so lit planets keep their
     // colour instead of clipping to white.
@@ -287,7 +289,7 @@ window.VoyagerScene = (function () {
 
     // hyperspace warp streaks (parented to the camera; brighten with speed)
     (function buildStreaks() {
-      const N = 150, geo = new THREE.BufferGeometry(), pos = new Float32Array(N * 2 * 3);
+      const N = Math.round(150 * Q), geo = new THREE.BufferGeometry(), pos = new Float32Array(N * 2 * 3);
       for (let i = 0; i < N; i++) { const a = Math.random() * 6.28, r = 6 + Math.random() * 72; streakSeg.push({ x: Math.cos(a) * r, y: Math.sin(a) * r, z: -(20 + Math.random() * 180) }); }
       geo.setAttribute("position", new THREE.BufferAttribute(pos, 3));
       streaks = new THREE.LineSegments(geo, new THREE.LineBasicMaterial({ color: 0xcfeaff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false, fog: false }));
@@ -297,7 +299,7 @@ window.VoyagerScene = (function () {
     BODIES.forEach((b, i) => {
       const grp = new THREE.Group(); grp.position.set(b.x, b.y, -i * SPACING);
       const mat = b.key === "sun" ? new THREE.MeshBasicMaterial({ map: tex("sun"), toneMapped: false }) : new THREE.MeshStandardMaterial({ map: tex(b.key), roughness: 1, metalness: 0 });
-      const mesh = new THREE.Mesh(new THREE.SphereGeometry(b.r, 64, 64), mat);
+      const mesh = new THREE.Mesh(new THREE.SphereGeometry(b.r, isMobile ? 40 : 64, isMobile ? 40 : 64), mat);
       mesh.rotation.z = rnd(-0.35, 0.35); mesh.userData.index = i;
       mesh.userData.pick = { kind: "planet", index: i, key: b.key };
       grp.add(mesh); clickable.push(mesh);
@@ -307,7 +309,7 @@ window.VoyagerScene = (function () {
         const s2 = radialSprite([[0, "rgba(255,200,120,0.5)"], [1, "rgba(255,120,40,0)"]]); s2.scale.set(150, 150, 1); grp.add(s2);
       } else {
         const atmo = atmosphere(b.r, ATMO[b.key], b.key === "earth" ? 3.0 : 2.2, b.key === "earth" ? 0.9 : 0.55); grp.add(atmo); grp.userData.atmo = atmo;
-        const h = halo(b.r, ATMO[b.key], 260); grp.add(h); grp.userData.halo = h;
+        const h = halo(b.r, ATMO[b.key], Math.round(260 * Q)); grp.add(h); grp.userData.halo = h;
       }
       if (b.key === "earth") { const clouds = new THREE.Mesh(new THREE.SphereGeometry(b.r * 1.03, 48, 48), new THREE.MeshStandardMaterial({ map: cloudTex(), transparent: true, opacity: 0.9, depthWrite: false })); grp.add(clouds); grp.userData.clouds = clouds; }
       if (b.rings) {
@@ -322,17 +324,17 @@ window.VoyagerScene = (function () {
     });
     sun = planets[0];
 
-    starLayers.push(starLayer(1600, 460, 0.7, 0xbfd4ff));
-    starLayers.push(starLayer(1000, 560, 1.2, 0x9fb8ff));
-    starLayers.push(starLayer(560, 680, 1.8, 0xffffff));
+    starLayers.push(starLayer(Math.round(1600 * Q), 460, 0.7, 0xbfd4ff));
+    starLayers.push(starLayer(Math.round(1000 * Q), 560, 1.2, 0x9fb8ff));
+    starLayers.push(starLayer(Math.round(560 * Q), 680, 1.8, 0xffffff));
     nebula("#4a2b8f", -170, 90, -160, 460); nebula("#123a7a", 200, -100, -300, 560); nebula("#7a1f5a", -130, -70, -30, 320); nebula("#1f5a6a", 150, 110, -430, 520);
     milkyway();
     galaxy("andromeda", "#a9c4ff", -330, 150, -900, 240, 0.6); galaxy("triangulum", "#ffcf9a", 320, -180, -640, 170, -0.3); galaxy("whirlpool", "#e6a9ff", -280, -160, -1180, 300, 1.1);
-    asteroidBelt(); makeComet(); makeMeteors(4); blackHole(); buildUFO();
+    asteroidBelt(); makeComet(); makeMeteors(isMobile ? 2 : 4); blackHole(); buildUFO();
 
     // bloom (optional — vendored postprocessing). Never let it break the scene.
     try {
-      if (THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass) {
+      if (!isMobile && THREE.EffectComposer && THREE.RenderPass && THREE.UnrealBloomPass) {
         composer = new THREE.EffectComposer(renderer);
         composer.addPass(new THREE.RenderPass(scene, camera));
         // gentle bloom — only the Sun / halos glow, planets keep their colour
@@ -345,6 +347,14 @@ window.VoyagerScene = (function () {
       mouse.tx = (e.clientX / innerWidth - 0.5) * 2; mouse.ty = (e.clientY / innerHeight - 0.5) * 2;
       ndc.x = (e.clientX / innerWidth) * 2 - 1; ndc.y = -(e.clientY / innerHeight) * 2 + 1;
     });
+    // touch: set the pick point on tap-down so the tap selects what's under it
+    renderer.domElement.addEventListener("pointerdown", (e) => {
+      ndc.x = (e.clientX / innerWidth) * 2 - 1; ndc.y = -(e.clientY / innerHeight) * 2 + 1;
+      raycaster.setFromCamera(ndc, camera);
+      const hits = raycaster.intersectObjects(clickable, false);
+      currentPick = null;
+      if (hits.length) { const o = hits[0].object, pk = o.userData.pick; if (pk && (pk.kind !== "planet" || hits[0].distance < 320)) currentPick = pk; }
+    }, { passive: true });
     renderer.domElement.addEventListener("click", () => {
       if (currentPick && opts.onSelect) { opts.onSelect(currentPick); if (currentPick.kind === "planet") jump(); }
       else if (opts.onEmpty) opts.onEmpty();          // clicked empty space → make a wish
