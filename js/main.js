@@ -189,11 +189,13 @@
 
     function ignite() {
       if (firing) return; firing = true;
+      if (window.VoyagerAudio) { VoyagerAudio.init(); VoyagerAudio.resume(); }
       btn.style.display = "none"; $(".launch-hint").style.display = "none";
       countdown.classList.add("show");
       const seq = ["3", "2", "1", "LIFT OFF"]; let i = 0;
       const step = () => {
         countdown.textContent = seq[i];
+        if (window.VoyagerAudio) VoyagerAudio.countdownBeep(seq[i] === "LIFT OFF");
         if (seq[i] === "LIFT OFF") {
           screen.classList.add("launching");                 // screen shake
           if (rocket3D && !reduce) RocketLaunch.launch(finish);
@@ -213,6 +215,7 @@
       $("#orbitmap").classList.add("show");
       document.body.style.overflow = "";
       revealObserver();
+      if (window.VoyagerAudio) VoyagerAudio.ambientStart();               // space drone
       setTimeout(() => { if (rocket3D) RocketLaunch.dispose(); }, 900);  // free GPU after fade
     }
     btn.addEventListener("click", ignite);
@@ -291,6 +294,7 @@
     const f = $("#flash");
     f.classList.remove("go"); void f.offsetWidth;   // restart animation
     f.classList.add("go");
+    if (window.VoyagerAudio) VoyagerAudio.whoosh(0.7, 0.2);
   }
   function onHover(pick, x, y) {
     const ret = $("#reticle");
@@ -363,6 +367,7 @@
     document.body.classList.add("diving");
     document.body.style.overflow = "hidden";
     flashJump();
+    if (window.VoyagerAudio) VoyagerAudio.dive();
     if (scene3D) VoyagerScene.diveTo();
     const warp = $("#warp-dive");
     warp.classList.add("active");
@@ -391,9 +396,17 @@
     const sv = $("#system-view");
     if (sv) sv.addEventListener("click", () => {
       closeFacts();
+      if (window.VoyagerAudio) VoyagerAudio.whoosh(0.9, 0.18);
       if (scene3D) VoyagerScene.systemView();
       else scrollTo({ top: 0, behavior: "smooth" });
     });
+    // sound toggle
+    const st = $("#sound-toggle");
+    if (st) {
+      const sync = () => { const on = !window.VoyagerAudio || VoyagerAudio.isEnabled(); st.textContent = on ? "🔊" : "🔇"; st.classList.toggle("muted", !on); };
+      sync();
+      st.addEventListener("click", () => { if (window.VoyagerAudio) { VoyagerAudio.init(); VoyagerAudio.toggle(); } sync(); });
+    }
     omDots().forEach((d, i) => d.addEventListener("click", () => { if (scene3D) VoyagerScene.jump(); flashJump(); goTo(i); }));
     addEventListener("resize", () => { if (scene3D) VoyagerScene.resize(); });
     // finale relaunch

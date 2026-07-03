@@ -11,6 +11,7 @@ window.RocketLaunch = (function () {
   "use strict";
 
   let renderer, scene, camera, rocket, flame, exhaust, glowLight, raf = 0;
+  let bgStars = null, bgPlanet = null;
   let lastT = 0, mode = "idle", vy = 0, launchT = 0, done = null, host;
   const PN = 240;                 // exhaust particle count
   let pData = [];
@@ -99,6 +100,32 @@ window.RocketLaunch = (function () {
     pData[i] = { vy: -(3 + Math.random() * 4), life: Math.random() };
   }
 
+  function buildStars() {
+    const n = 520, g = new THREE.BufferGeometry(), p = new Float32Array(n * 3);
+    for (let i = 0; i < n; i++) { p[i * 3] = (Math.random() - 0.5) * 130; p[i * 3 + 1] = (Math.random() - 0.5) * 90; p[i * 3 + 2] = -18 - Math.random() * 90; }
+    g.setAttribute("position", new THREE.BufferAttribute(p, 3));
+    bgStars = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xcfe0ff, size: 0.35, transparent: true, opacity: 0.9, depthWrite: false }));
+    scene.add(bgStars);
+  }
+  function buildPlanet() {
+    bgPlanet = new THREE.Mesh(new THREE.SphereGeometry(7, 40, 40),
+      new THREE.MeshStandardMaterial({ color: 0x2a5aa8, roughness: 1, emissive: 0x0a1a3a, emissiveIntensity: 0.5 }));
+    bgPlanet.position.set(-17, 11, -46); scene.add(bgPlanet);
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(7.8, 40, 40),
+      new THREE.MeshBasicMaterial({ color: 0x4f8fff, transparent: true, opacity: 0.12, side: THREE.BackSide, toneMapped: false }));
+    glow.position.copy(bgPlanet.position); scene.add(glow);
+  }
+  function buildTower() {
+    const g = new THREE.Group();
+    const mm = new THREE.MeshStandardMaterial({ color: 0x39414f, metalness: 0.6, roughness: 0.5 });
+    const p1 = new THREE.Mesh(new THREE.BoxGeometry(0.36, 10.5, 0.36), mm); p1.position.set(2.8, 3.2, 0.7); g.add(p1);
+    const p2 = p1.clone(); p2.position.z = -0.7; g.add(p2);
+    for (let y = 1; y <= 8.5; y += 1.5) { const beam = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.16, 1.5), mm); beam.position.set(2.8, y, 0); g.add(beam); }
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(1.9, 0.24, 0.24), mm); arm.position.set(1.75, 4.6, 0); g.add(arm);
+    const light = new THREE.Mesh(new THREE.SphereGeometry(0.12, 10, 10), new THREE.MeshBasicMaterial({ color: 0xff4433, toneMapped: false })); light.position.set(2.8, 8.9, 0); g.add(light);
+    scene.add(g);
+  }
+
   function init(container) {
     if (typeof THREE === "undefined") return false;
     host = container;
@@ -125,6 +152,8 @@ window.RocketLaunch = (function () {
     rocket.position.y = -2.0;
     scene.add(rocket);
 
+    buildStars(); buildPlanet(); buildTower();
+
     addEventListener("resize", onResize);
     lastT = performance.now();
     loop();
@@ -143,11 +172,16 @@ window.RocketLaunch = (function () {
     const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
     const t = now / 1000;
 
-    // idle presentation: slow turn + gentle bob
+    // idle presentation: slow turn + gentle bob + cinematic camera drift
     if (mode === "idle") {
       rocket.rotation.y += dt * 0.35;
       rocket.position.y = -2.0 + Math.sin(t * 1.4) * 0.12;
+      camera.position.x = Math.sin(t * 0.32) * 1.8;
+      camera.position.y = 2.6 + Math.sin(t * 0.5) * 0.35;
+      camera.lookAt(0, 2.8, 0);
     }
+    if (bgStars) bgStars.rotation.y += dt * 0.01;
+    if (bgPlanet) bgPlanet.rotation.y += dt * 0.05;
 
     // engine flicker
     const fl = 0.8 + Math.random() * 0.4;
