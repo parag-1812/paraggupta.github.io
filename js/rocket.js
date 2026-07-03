@@ -11,7 +11,7 @@ window.RocketLaunch = (function () {
   "use strict";
 
   let renderer, scene, camera, rocket, flame, exhaust, glowLight, raf = 0;
-  let bgStars = null, bgPlanet = null;
+  let bgStars = null, bgPlanet = null; const steamSprites = [];
   let lastT = 0, mode = "idle", vy = 0, launchT = 0, done = null, host;
   const PN = 240;                 // exhaust particle count
   let pData = [];
@@ -126,6 +126,22 @@ window.RocketLaunch = (function () {
     scene.add(g);
   }
 
+  function softSprite(rgb) {
+    const c = document.createElement("canvas"); c.width = c.height = 128; const x = c.getContext("2d");
+    const g = x.createRadialGradient(64, 64, 0, 64, 64, 64); g.addColorStop(0, `rgba(${rgb},0.55)`); g.addColorStop(1, `rgba(${rgb},0)`);
+    x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    return new THREE.Sprite(new THREE.SpriteMaterial({ map: new THREE.CanvasTexture(c), transparent: true, depthWrite: false }));
+  }
+  function buildPad() {
+    const pad = new THREE.Mesh(new THREE.CylinderGeometry(4.6, 5.3, 0.7, 46), new THREE.MeshStandardMaterial({ color: 0x252b3a, metalness: 0.7, roughness: 0.5 }));
+    pad.position.y = -3.4; scene.add(pad);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(4.75, 0.1, 12, 52), new THREE.MeshBasicMaterial({ color: 0x34e2ff, toneMapped: false }));
+    ring.rotation.x = Math.PI / 2; ring.position.y = -3.02; scene.add(ring);
+  }
+  function buildSteam() {
+    for (let i = 0; i < 5; i++) { const s = softSprite("232,238,250"); s.userData = { ph: i / 5, x: (i - 2) * 1.3 }; s.visible = false; scene.add(s); steamSprites.push(s); }
+  }
+
   function init(container) {
     if (typeof THREE === "undefined") return false;
     host = container;
@@ -141,9 +157,10 @@ window.RocketLaunch = (function () {
     camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.1, 100);
     camera.position.set(0, 2.6, 16); camera.lookAt(0, 2.6, 0);
 
-    scene.add(new THREE.AmbientLight(0xafc0ff, 0.55));
-    const key = new THREE.DirectionalLight(0xffffff, 1.1); key.position.set(4, 8, 8); scene.add(key);
+    scene.add(new THREE.AmbientLight(0xafc0ff, 0.5));
+    const key = new THREE.DirectionalLight(0xffffff, 1.0); key.position.set(4, 8, 8); scene.add(key);
     const rim = new THREE.DirectionalLight(0x6f8cff, 0.7); rim.position.set(-6, 2, -4); scene.add(rim);
+    const back = new THREE.DirectionalLight(0xffd9a0, 0.5); back.position.set(0, 4, -12); scene.add(back);  // warm rim
     glowLight = new THREE.PointLight(0xff8a2a, 0, 14); glowLight.position.set(0, -1, 0); scene.add(glowLight);
 
     rocket = buildRocket();
@@ -152,7 +169,7 @@ window.RocketLaunch = (function () {
     rocket.position.y = -2.0;
     scene.add(rocket);
 
-    buildStars(); buildPlanet(); buildTower();
+    buildStars(); buildPlanet(); buildTower(); buildPad(); buildSteam();
 
     addEventListener("resize", onResize);
     lastT = performance.now();
@@ -172,16 +189,25 @@ window.RocketLaunch = (function () {
     const dt = Math.min(0.05, (now - lastT) / 1000); lastT = now;
     const t = now / 1000;
 
-    // idle presentation: slow turn + gentle bob + cinematic camera drift
+    // idle presentation: slow turn + gentle bob + smooth cinematic camera drift
     if (mode === "idle") {
-      rocket.rotation.y += dt * 0.35;
-      rocket.position.y = -2.0 + Math.sin(t * 1.4) * 0.12;
-      camera.position.x = Math.sin(t * 0.32) * 1.8;
-      camera.position.y = 2.6 + Math.sin(t * 0.5) * 0.35;
-      camera.lookAt(0, 2.8, 0);
+      rocket.rotation.y += dt * 0.32;
+      rocket.position.y = -2.0 + Math.sin(t * 1.2) * 0.1;
+      camera.position.x = Math.sin(t * 0.22) * 2.4;
+      camera.position.y = 2.6 + Math.sin(t * 0.34) * 0.45;
+      camera.position.z = 16 + Math.sin(t * 0.18) * 0.8;
+      camera.lookAt(0, 2.9, 0);
     }
-    if (bgStars) bgStars.rotation.y += dt * 0.01;
+    if (bgStars) bgStars.rotation.y += dt * 0.008;
     if (bgPlanet) bgPlanet.rotation.y += dt * 0.05;
+    // rising steam at the pad (idle venting)
+    for (let i = 0; i < steamSprites.length; i++) {
+      const s = steamSprites[i], ph = (t * 0.22 + s.userData.ph) % 1;
+      s.visible = mode !== "flying";
+      s.position.set(s.userData.x, -3 + ph * 6.5, 0.4);
+      s.scale.setScalar(2 + ph * 4.5);
+      s.material.opacity = (1 - ph) * 0.22 * (mode === "igniting" ? 2 : 1);
+    }
 
     // engine flicker
     const fl = 0.8 + Math.random() * 0.4;

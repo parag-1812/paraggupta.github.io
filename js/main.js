@@ -33,6 +33,7 @@
     andromeda:  { name: "Andromeda Galaxy", tag: "Nearest major galaxy", color: "#a9c4ff", facts: ["2.5 million light-years away", "On a collision course with the Milky Way (~4.5 billion yrs)", "Holds around 1 trillion stars"] },
     triangulum: { name: "Triangulum Galaxy", tag: "3rd-largest in our Local Group", color: "#ffcf9a", facts: ["~2.7 million light-years away", "Home to about 40 billion stars", "Possibly a satellite of Andromeda"] },
     whirlpool:  { name: "Whirlpool Galaxy", tag: "The classic spiral", color: "#e6a9ff", facts: ["~31 million light-years away", "First galaxy ever classified as a spiral", "Locked in a slow dance with a smaller galaxy"] },
+    ufo:        { name: "Unknown Craft", tag: "Signal decoded 🛸", color: "#7cff9e", facts: ["\"Greetings, Earthling — we come in peace (and Java).\"", "\"Nice portfolio, human. Very out of this world.\"", "\"Ping us at paraggupta9988@gmail.com — Parag builds cool things.\""] },
   };
 
   /* typewriter that types / deletes through a list of words, forever */
@@ -50,6 +51,7 @@
   }
 
   let scene3D = false, factMode = null, factTimer = 0, lastHoverKey = null;
+  let touring = false, wishCooldown = 0, wishTipT = 0; const tourTimers = [];
   let curProgress = 0, lastScrollY = 0, velocity = 0;
 
   /* ======================================================================
@@ -307,6 +309,8 @@
       $("#reticle-label").textContent = `${PLANET[pick.index].toUpperCase()} · ${DEST[pick.index]} ▸ CLICK TO TRAVEL`;
     } else if (pick.kind === "blackhole") {
       $("#reticle-label").textContent = "THE VOID ▸ ENTER THE BLACK HOLE";
+    } else if (pick.kind === "ufo") {
+      $("#reticle-label").textContent = "UNKNOWN CRAFT ▸ DECODE SIGNAL";
     } else {
       const f = FACTS[pick.key];
       $("#reticle-label").textContent = `${(f ? f.name : "GALAXY").toUpperCase()} ▸ CLICK FOR FACTS`;
@@ -322,6 +326,13 @@
   function onSelect(pick) {
     clearTimeout(factTimer);
     if (pick.kind === "blackhole") { startDive(); return; }
+    if (pick.kind === "ufo") {
+      factMode = "ufo";
+      document.body.classList.add("viewing-space");
+      if (window.VoyagerAudio) VoyagerAudio.alien();
+      openFacts("ufo", false, "right");
+      return;
+    }
     if (pick.kind === "planet") {
       factMode = "planet";
       document.body.classList.add("facts-open");         // keep content, hide orbit map
@@ -348,7 +359,9 @@
     $("#fact-name").textContent = f.name;
     $("#fact-tag").textContent = f.tag;
     $("#fact-list").innerHTML = f.facts.map((x) => `<li>${esc(x)}</li>`).join("");
-    $("#fact-hint").textContent = isPlanet ? "Clears shortly · ✕ / ESC to close now" : "Close (✕ / ESC) to fly back to the system";
+    $("#fact-hint").textContent = isPlanet ? "Clears shortly · ✕ / ESC to close now"
+      : key === "ufo" ? "Close (✕ / ESC) to end transmission"
+      : "Close (✕ / ESC) to fly back to the system";
     const panel = $("#factpanel");
     panel.classList.toggle("left", side === "left");
     panel.classList.add("show");
@@ -387,6 +400,33 @@
     scrollTo({ top: 0, behavior: "auto" });
   }
 
+  /* ---- make a wish (click empty space) ---- */
+  function spawnWish() {
+    if (factMode || document.body.classList.contains("diving")) return;
+    const now = performance.now();
+    if (now - wishCooldown < 850) return; wishCooldown = now;
+    if (window.VoyagerAudio) VoyagerAudio.wish();
+    const s = document.createElement("div"); s.className = "wishstar";
+    s.style.left = (8 + Math.random() * 58) + "vw"; s.style.top = (6 + Math.random() * 32) + "vh";
+    document.body.appendChild(s); setTimeout(() => s.remove(), 1300);
+    const tip = $("#wishtip"); if (tip) { tip.classList.add("show"); clearTimeout(wishTipT); wishTipT = setTimeout(() => tip.classList.remove("show"), 1500); }
+  }
+
+  /* ---- auto-tour (hands-free flythrough) ---- */
+  function startTour() {
+    if (touring) return; touring = true;
+    const btn = $("#tour-btn"); if (btn) { btn.textContent = "⏹ STOP"; btn.classList.add("on"); }
+    closeFacts();
+    const per = 3800;
+    SECTIONS.forEach((id, i) => tourTimers.push(setTimeout(() => { goTo(i); if (window.VoyagerAudio) VoyagerAudio.whoosh(0.6, 0.14); }, i * per)));
+    tourTimers.push(setTimeout(stopTour, SECTIONS.length * per + 1200));
+  }
+  function stopTour() {
+    if (!touring) return; touring = false;
+    const btn = $("#tour-btn"); if (btn) { btn.textContent = "▶ TOUR"; btn.classList.remove("on"); }
+    tourTimers.forEach(clearTimeout); tourTimers.length = 0;
+  }
+
   /* ======================================================================
      MISC
      ====================================================================== */
@@ -409,6 +449,12 @@
       sync();
       st.addEventListener("click", () => { if (window.VoyagerAudio) { VoyagerAudio.init(); VoyagerAudio.toggle(); } sync(); });
     }
+    // auto-tour toggle
+    const tb = $("#tour-btn");
+    if (tb) tb.addEventListener("click", () => { touring ? stopTour() : startTour(); });
+    // warm up audio on the first interaction so the countdown beeps are in sync
+    const warm = () => { if (window.VoyagerAudio) { VoyagerAudio.init(); VoyagerAudio.resume(); } };
+    addEventListener("pointerdown", warm, { once: true });
     omDots().forEach((d, i) => d.addEventListener("click", () => { if (scene3D) VoyagerScene.jump(); flashJump(); goTo(i); }));
     addEventListener("resize", () => { if (scene3D) VoyagerScene.resize(); });
     // finale relaunch
@@ -419,7 +465,7 @@
     addEventListener("keydown", (e) => { if (e.key === "Escape") closeFacts(); });
     // a real user scroll dismisses an open PLANET panel (so it never lingers
     // over the next section). Programmatic travel-scroll doesn't fire these.
-    const dismissPlanet = () => { if (factMode === "planet") closeFacts(); };
+    const dismissPlanet = () => { if (factMode === "planet") closeFacts(); if (touring) stopTour(); };
     addEventListener("wheel", dismissPlanet, { passive: true });
     addEventListener("touchmove", dismissPlanet, { passive: true });
     addEventListener("keydown", (e) => {
@@ -433,11 +479,12 @@
     render();
 
     // Try the 3D scene; fall back to a 2D starfield if WebGL/Three is missing.
-    scene3D = !!(window.VoyagerScene && VoyagerScene.init($("#scene"), { onHover, onSelect, onArrive }));
+    scene3D = !!(window.VoyagerScene && VoyagerScene.init($("#scene"), { onHover, onSelect, onArrive, onEmpty: spawnWish }));
     if (!scene3D) { console.warn("WebGL unavailable — using 2D fallback"); starfield2D(); }
 
     launchSequence();
     misc();
     requestAnimationFrame(loop);
+    setTimeout(() => { const l = $("#loader"); if (l) l.classList.add("done"); }, 1500);
   });
 })();

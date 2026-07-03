@@ -62,6 +62,16 @@ window.VoyagerAudio = (function () {
 
   function blip(up) { tone(up ? 620 : 500, 0.07, "triangle", 0.08, up ? 900 : 380); }
   function chime() { tone(659.25, 0.5, "sine", 0.13); setTimeout(() => tone(987.77, 0.6, "sine", 0.1), 90); }
+  function wish() { tone(1046, 0.12, "sine", 0.1, 1568); setTimeout(() => tone(1568, 0.16, "sine", 0.08), 80); setTimeout(() => tone(2093, 0.22, "sine", 0.06), 160); }
+  function alien() {
+    if (!ctx || !enabled) return; const t = ctx.currentTime;
+    for (let i = 0; i < 5; i++) {
+      const o = ctx.createOscillator(); o.type = "sine"; const f = 320 + Math.random() * 560;
+      o.frequency.setValueAtTime(f, t + i * 0.13); o.frequency.linearRampToValueAtTime(f * 1.6, t + i * 0.13 + 0.1);
+      const g = ctx.createGain(); g.gain.setValueAtTime(0.0001, t + i * 0.13); g.gain.exponentialRampToValueAtTime(0.13, t + i * 0.13 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + i * 0.13 + 0.13);
+      o.connect(g); out(g); o.start(t + i * 0.13); o.stop(t + i * 0.13 + 0.15);
+    }
+  }
 
   /* ---- rocket launch rumble ---- */
   function launch() {
@@ -152,5 +162,5 @@ window.VoyagerAudio = (function () {
   function toggle() { setEnabled(!enabled); resume(); return enabled; }
   function isEnabled() { return enabled; }
 
-  return { init, resume, countdownBeep, launch, whoosh, dive, blip, chime, ambientStart, ambientStop, setEnabled, toggle, isEnabled };
+  return { init, resume, countdownBeep, launch, whoosh, dive, blip, chime, wish, alien, ambientStart, ambientStop, setEnabled, toggle, isEnabled };
 })();

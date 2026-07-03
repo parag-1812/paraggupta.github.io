@@ -13,6 +13,7 @@ window.VoyagerScene = (function () {
   let renderer, scene, camera, sunLight, sun, planets = [], starLayers = [];
   let belt, comet, cometTail, raycaster, composer = null, blackhole = null;
   let streaks = null; const streakSeg = [];
+  let ufo = null;
   let lastT = 0, curFov = 58, container, opts = {};
   let hovered = -1, boost = 0, currentPick = null, pickObj = null;
   let cine = null;                       // cinematic fly-to-galaxy state
@@ -234,6 +235,24 @@ window.VoyagerScene = (function () {
     scene.add(grp); blackhole = grp;
   }
 
+  /* ---------- UFO (clickable · alien transmission) ---------- */
+  function buildUFO() {
+    const g = new THREE.Group(); g.position.set(36, 14, -280);
+    const saucer = new THREE.Mesh(new THREE.SphereGeometry(6, 32, 20), new THREE.MeshStandardMaterial({ color: 0xaeb6c6, metalness: 0.85, roughness: 0.28 }));
+    saucer.scale.set(1, 0.32, 1); g.add(saucer);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(6, 0.5, 12, 44), new THREE.MeshStandardMaterial({ color: 0x5b6070, metalness: 0.9, roughness: 0.2 }));
+    rim.rotation.x = Math.PI / 2; g.add(rim);
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(3, 24, 16, 0, 6.28, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0x9fe8ff, metalness: 0.2, roughness: 0.1, transparent: true, opacity: 0.85, emissive: 0x1a7090, emissiveIntensity: 0.6 }));
+    dome.position.y = 1.3; g.add(dome);
+    const lights = [];
+    for (let i = 0; i < 8; i++) { const a = i / 8 * 6.28; const L = new THREE.Mesh(new THREE.SphereGeometry(0.42, 10, 10), new THREE.MeshBasicMaterial({ color: 0x7cff9e, toneMapped: false })); L.position.set(Math.cos(a) * 5.6, -0.5, Math.sin(a) * 5.6); g.add(L); lights.push(L); }
+    const beam = radialSprite([[0, "rgba(124,255,158,0.5)"], [0.5, "rgba(124,255,158,0.15)"], [1, "rgba(124,255,158,0)"]]);
+    beam.position.y = -5; beam.scale.set(16, 16, 1); beam.material.fog = false; g.add(beam);
+    const hit = new THREE.Mesh(new THREE.SphereGeometry(8, 12, 12), new THREE.MeshBasicMaterial({ visible: false }));
+    hit.userData.pick = { kind: "ufo", key: "ufo" }; g.add(hit); clickable.push(hit);
+    g.userData = { lights }; scene.add(g); ufo = g;
+  }
+
   /* ====================================================================
      INIT
      ==================================================================== */
@@ -309,7 +328,7 @@ window.VoyagerScene = (function () {
     nebula("#4a2b8f", -170, 90, -160, 460); nebula("#123a7a", 200, -100, -300, 560); nebula("#7a1f5a", -130, -70, -30, 320); nebula("#1f5a6a", 150, 110, -430, 520);
     milkyway();
     galaxy("andromeda", "#a9c4ff", -330, 150, -900, 240, 0.6); galaxy("triangulum", "#ffcf9a", 320, -180, -640, 170, -0.3); galaxy("whirlpool", "#e6a9ff", -280, -160, -1180, 300, 1.1);
-    asteroidBelt(); makeComet(); makeMeteors(4); blackHole();
+    asteroidBelt(); makeComet(); makeMeteors(4); blackHole(); buildUFO();
 
     // bloom (optional — vendored postprocessing). Never let it break the scene.
     try {
@@ -328,6 +347,7 @@ window.VoyagerScene = (function () {
     });
     renderer.domElement.addEventListener("click", () => {
       if (currentPick && opts.onSelect) { opts.onSelect(currentPick); if (currentPick.kind === "planet") jump(); }
+      else if (opts.onEmpty) opts.onEmpty();          // clicked empty space → make a wish
     });
     return true;
   }
@@ -446,6 +466,12 @@ window.VoyagerScene = (function () {
     sun.userData.mesh.rotation.y += 0.03 * dt;
     if (belt) belt.rotation.z += dt * 0.05;
     if (blackhole) { blackhole.userData.disk.rotation.z += dt * 0.35; blackhole.userData.photon.rotation.z += dt * 0.1; }
+    if (ufo) {
+      ufo.rotation.y += dt * 0.5;
+      ufo.position.y = 14 + Math.sin(t * 0.8) * 1.6;
+      ufo.position.x = 36 + Math.sin(t * 0.3) * 9;
+      ufo.userData.lights.forEach((L, i) => { L.material.color.setHex((Math.floor(t * 4) + i) % 3 === 0 ? 0xffffff : 0x7cff9e); });
+    }
 
     // meteor shower
     for (let mi = 0; mi < meteors.length; mi++) {
