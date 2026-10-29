@@ -34,6 +34,8 @@
     triangulum: { name: "Triangulum Galaxy", tag: "3rd-largest in our Local Group", color: "#ffcf9a", facts: ["~2.7 million light-years away", "Home to about 40 billion stars", "Possibly a satellite of Andromeda"] },
     whirlpool:  { name: "Whirlpool Galaxy", tag: "The classic spiral", color: "#e6a9ff", facts: ["~31 million light-years away", "First galaxy ever classified as a spiral", "Locked in a slow dance with a smaller galaxy"] },
     ufo:        { name: "Unknown Craft", tag: "Signal decoded 🛸", color: "#7cff9e", facts: ["\"Greetings, Earthling — we come in peace (and Java).\"", "\"Nice portfolio, human. Very out of this world.\"", "\"Ping us at paraggupta9988@gmail.com — Parag builds cool things.\""] },
+    comet:      { name: "Comet", tag: "Icy wanderer of the deep", color: "#9fe0ff", facts: ["Made of ice, dust and rock — a \"dirty snowball\"", "Its glowing tail always points away from the Sun", "Some take thousands of years to orbit once"] },
+    belt:       { name: "The Asteroid Belt", tag: "Between Mars & Jupiter", color: "#b9a48c", facts: ["Millions of rocky asteroids orbit the Sun here", "All of them combined weigh less than our Moon", "Ceres, the largest, is a 940 km dwarf planet"] },
   };
 
   /* typewriter that types / deletes through a list of words, forever */
@@ -105,13 +107,22 @@
           </div>`).join("")}
       </div>`).join("");
 
-    $("#projects-grid").innerHTML = c.projects.map((p, i) => `
+    $("#projects-grid").innerHTML = c.projects.map((p, i) => {
+      // `repo`/`live` are the current fields; `link` is still honoured as a fallback.
+      const repo = p.repo || p.link || "";
+      const live = p.live || "";
+      const links = [
+        repo ? `<a class="project-link" href="${esc(repo)}" target="_blank" rel="noopener">CODE ↗</a>` : "",
+        live ? `<a class="project-link project-link-live" href="${esc(live)}" target="_blank" rel="noopener">LIVE ↗</a>` : "",
+      ].join("");
+      return `
       <div class="project-card">
         <span class="project-tag-sat">SAT-${String(i + 1).padStart(2, "0")}</span>
         <h3>${esc(p.name)}</h3><p>${esc(p.blurb)}</p>
         <div class="chips">${(p.tags || []).map((t) => `<span class="chip">${esc(t)}</span>`).join("")}</div>
-        ${p.link ? `<a class="project-link" href="${esc(p.link)}" target="_blank" rel="noopener">OPEN DOCK ↗</a>` : ""}
-      </div>`).join("");
+        ${links ? `<div class="project-links">${links}</div>` : ""}
+      </div>`;
+    }).join("");
 
     const timelineHTML = (arr) => arr.map((e) => `
       <div class="tl-item">
@@ -333,6 +344,14 @@
       openFacts("ufo", false, "right");
       return;
     }
+    // Comet & asteroid belt: show a facts panel in place — no camera travel.
+    if (pick.kind === "comet" || pick.kind === "belt") {
+      factMode = "info";
+      document.body.classList.add("facts-open");
+      if (window.VoyagerAudio) VoyagerAudio.chime();
+      openFacts(pick.key, false, planetPanelSide(Math.round(curProgress * (SECTIONS.length - 1))));
+      return;
+    }
     if (pick.kind === "planet") {
       factMode = "planet";
       document.body.classList.add("facts-open");         // keep content, hide orbit map
@@ -361,6 +380,7 @@
     $("#fact-list").innerHTML = f.facts.map((x) => `<li>${esc(x)}</li>`).join("");
     $("#fact-hint").textContent = isPlanet ? "Clears shortly · ✕ / ESC to close now"
       : key === "ufo" ? "Close (✕ / ESC) to end transmission"
+      : (key === "comet" || key === "belt") ? "Close (✕ / ESC) to resume the voyage"
       : "Close (✕ / ESC) to fly back to the system";
     const panel = $("#factpanel");
     panel.classList.toggle("left", side === "left");
@@ -465,11 +485,11 @@
     addEventListener("keydown", (e) => { if (e.key === "Escape") closeFacts(); });
     // a real user scroll dismisses an open PLANET panel (so it never lingers
     // over the next section). Programmatic travel-scroll doesn't fire these.
-    const dismissPlanet = () => { if (factMode === "planet") closeFacts(); if (touring) stopTour(); };
+    const dismissPlanet = () => { if (factMode === "planet" || factMode === "info") closeFacts(); if (touring) stopTour(); };
     addEventListener("wheel", dismissPlanet, { passive: true });
     addEventListener("touchmove", dismissPlanet, { passive: true });
     addEventListener("keydown", (e) => {
-      if (factMode === "planet" && ["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " ", "Spacebar"].includes(e.key)) closeFacts();
+      if ((factMode === "planet" || factMode === "info") && ["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " ", "Spacebar"].includes(e.key)) closeFacts();
     });
   }
 

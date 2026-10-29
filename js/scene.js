@@ -11,7 +11,7 @@ window.VoyagerScene = (function () {
   "use strict";
 
   let renderer, scene, camera, sunLight, sun, planets = [], starLayers = [];
-  let belt, comet, cometTail, raycaster, composer = null, blackhole = null;
+  let belt, comet, cometTail, cometHit = null, raycaster, composer = null, blackhole = null;
   let streaks = null; const streakSeg = [];
   let ufo = null;
   let lastT = 0, curFov = 58, container, opts = {};
@@ -140,10 +140,17 @@ window.VoyagerScene = (function () {
     for (let i = 0; i < count; i++) { const a = Math.random() * 6.28, rr = rnd(34, 74); pos[i * 3] = Math.cos(a) * rr; pos[i * 3 + 1] = Math.sin(a) * rr * 0.42 + rnd(-4, 4); pos[i * 3 + 2] = zc + Math.sin(a) * rr * 0.42 + rnd(-10, 10); }
     g.setAttribute("position", new THREE.BufferAttribute(pos, 3));
     belt = new THREE.Points(g, new THREE.PointsMaterial({ color: 0xb9a48c, size: 0.9, transparent: true, opacity: 0.85, depthWrite: false })); scene.add(belt);
+    // invisible ring-shaped hit area so the belt is clickable (shows facts)
+    const hit = new THREE.Mesh(new THREE.TorusGeometry(54, 17, 10, 56), new THREE.MeshBasicMaterial({ visible: false }));
+    hit.position.set(0, 0, zc); hit.rotation.x = Math.PI / 2 - 0.9;
+    hit.userData.pick = { kind: "belt", key: "belt" }; scene.add(hit); clickable.push(hit);
   }
   function makeComet() {
     comet = radialSprite([[0, "rgba(200,240,255,0.95)"], [0.4, "rgba(120,200,255,0.5)"], [1, "rgba(120,200,255,0)"]]); comet.scale.set(6, 6, 1); scene.add(comet);
     cometTail = radialSprite([[0, "rgba(150,220,255,0.5)"], [1, "rgba(150,220,255,0)"]]); cometTail.scale.set(40, 6, 1); scene.add(cometTail);
+    // invisible sphere that follows the comet so it can be clicked (shows facts)
+    cometHit = new THREE.Mesh(new THREE.SphereGeometry(11, 12, 12), new THREE.MeshBasicMaterial({ visible: false }));
+    cometHit.userData.pick = { kind: "comet", key: "comet" }; scene.add(cometHit); clickable.push(cometHit);
   }
 
   /* ---------- moons (orbit their planet) ---------- */
@@ -499,6 +506,7 @@ window.VoyagerScene = (function () {
     if (comet) {
       const p = (t * 0.06) % 1, cx = -220 + p * 440, cy = 70 - p * 40, cz = -170;
       comet.position.set(cx, cy, cz); cometTail.position.set(cx + 18, cy + 1.6, cz);
+      if (cometHit) cometHit.position.set(cx, cy, cz);
       const tw = 0.5 + Math.sin(t * 6) * 0.15; comet.material.opacity = tw; cometTail.material.opacity = tw * 0.6;
     }
 

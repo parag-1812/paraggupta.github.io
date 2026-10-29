@@ -2,7 +2,7 @@
 
 > A portfolio you *fly through*. Launch a rocket, cruise the entire solar system, click planets and galaxies for facts, dive into a black hole, and land on a finale — all in real-time **WebGL**, with **synthesized spatial audio**, and **zero frameworks**.
 
-**Live:** _add your Vercel URL here_ · **Code:** https://github.com/parag-1812/paraggupta.github.io
+**Live:** https://paragguptagithubio.vercel.app/ · **Code:** https://github.com/parag-1812/paraggupta.github.io
 
 ![Voyager portfolio preview](assets/og-image.svg)
 
@@ -42,7 +42,7 @@ Scroll = travel. Every section of the portfolio is a stop on a voyage outward fr
 
 **Vanilla HTML · CSS · JavaScript** + **[Three.js](https://threejs.org/)** (r128, vendored) with UnrealBloom post-processing, and the **Web Audio API** for sound. No build step, no framework, no dependencies to install.
 
-> Portfolio content reflects my work as a **Java Full Stack Developer**: Java, Spring Boot, React.js, REST APIs, microservices, SQL, Docker and more.
+> Portfolio content reflects my work as a **Java Backend Developer**: Java, Spring Boot, Spring Security, REST APIs, Hibernate/JPA, microservices, SQL, Docker and more.
 
 ---
 

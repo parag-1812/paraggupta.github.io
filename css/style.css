@@ -297,8 +297,10 @@ a { color: inherit; text-decoration: none; }
 .project-card p { color: var(--ink-dim); font-size: .92rem; margin-bottom: 14px; }
 .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
 .chip { font-family: var(--mono); font-size: 10px; letter-spacing: 1px; padding: 4px 9px; border-radius: 999px; border: 1px solid var(--glass-brd); color: var(--ink-dim); }
+.project-links { display: flex; gap: 16px; align-items: center; margin-top: 2px; }
 .project-link { font-family: var(--mono); font-size: 11px; letter-spacing: 2px; color: var(--cyan); }
 .project-link:hover { text-decoration: underline; }
+.project-link-live { color: var(--magenta); }
 @media (max-width: 560px) { .projects-grid { grid-template-columns: 1fr; } }
 
 .timeline { position: relative; padding-left: 28px; }
